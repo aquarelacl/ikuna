@@ -1,0 +1,10 @@
+name = Ikuna
+description = Funcionalidades específicas para ikuna.
+package = Aquarela Modules
+core = 7.x
+
+version = "7.x-2.0"
+core = "7.x"
+project = "ikuna"
+datestamp = "1353011121"
+

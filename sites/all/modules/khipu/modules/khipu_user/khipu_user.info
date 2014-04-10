@@ -1,0 +1,12 @@
+name = Khipu User
+description = Allows each user on the site can associate khipu accounts on their profiles.
+core = 7.x
+package = Khipu
+dependencies[] = khipu
+
+; Information added by drupal.org packaging script on 2013-05-16
+version = "7.x-1.0-beta2"
+core = "7.x"
+project = "khipu"
+datestamp = "1368731715"
+

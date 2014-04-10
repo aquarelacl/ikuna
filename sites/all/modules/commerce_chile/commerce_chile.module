@@ -1,0 +1,11 @@
+<?php
+
+/**
+ * @file
+ * Implementa los servicios para trabajar con los metodos de pago de Chile.
+ */
+
+
+/**
+ * hook_menu().
+ */

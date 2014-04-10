@@ -1,0 +1,116 @@
+<?php
+
+/**
+ * @file
+ * This file contains the schema for data_visualization entities.
+ * It also sets some default values for variables.
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * TODO: Describe the module's data model
+ *
+ */
+function data_visualization_schema() {
+  $schema = array();
+
+  $schema['data_visualization'] = array(
+  'description' => '',
+  'fields' => array(
+    'dvid' => array(
+      'description' => '',
+      'type' => 'serial',
+      'not null' => TRUE,
+    ),
+    'title' => array(
+      'description' => 'Title of Visualization',
+      'type' => 'text',
+      'length' => '300',
+      'not null' => TRUE,
+    ),
+    'description' => array(
+      'description' => 'Description of Visualization',
+      'type' => 'text',
+      'length' => '1000',
+      'not null' => TRUE,
+    ),
+    'fid' => array(
+      'description' => 'Foreign key reference to corresponding vizstruct js datafile',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'created' => array(
+      'description' => '',
+      'type' => 'int',
+      'not null' => FALSE,
+    ),
+    'updated' => array(
+      'description' => '',
+      'type' => 'int',
+      'not null' => FALSE,
+    ),
+    'viz_type' => array(
+      'description' => 'Can be bar, line, pie, scatter, etc.',
+      'type' => 'char',
+      'length' => '20',
+      'not null' => FALSE,
+    ),
+    'library' => array(
+      'description' => 'jqplot, jit, highcharts',
+      'type' => 'char',
+      'length' => '40',
+      'not null' => FALSE,
+      'default' => 'jquery.jqplot',
+    ),
+    'status' => array(
+      'description' => '',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+    'weight' => array(
+      'description' => '',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ),
+  ),
+  'primary key' => array('dvid'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ *
+ * Perform initial setup tasks
+ *
+ */
+function data_visualization_install() {
+  $data_files_path = file_build_uri('data-visualization-files');
+  file_prepare_directory($data_files_path, FILE_CREATE_DIRECTORY);
+  $colors = array(
+    '#8BCB00',
+    '#00D1AB',
+    '#D14200',
+    '#D10026',
+    '#00D142',
+    '#B3FF0F',
+    '#8FD100',
+  );
+  variable_set('data_visualization_default_color_palette', serialize($colors));
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * Perform final cleanup tasks
+ *
+ */
+function data_visualization_uninstall() {
+  variable_del('data_visualization_default_color_palette');
+  variable_del('data_visualization_api_module_path');
+}

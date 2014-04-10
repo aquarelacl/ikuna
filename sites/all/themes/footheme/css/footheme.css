@@ -1,0 +1,1523 @@
+/**
+ * Footheme footheme.css
+ *
+ * Use this file to add your custom styles.
+ *
+ * You can change the name of this file, just
+ * remember to update the name in the info file
+ * as well.
+ */
+ /* GENERALES */
+body{
+	background:#F8F8F8;
+}
+form {
+	margin:0;
+}
+#tasks {
+	float:right;
+	padding:20px 0 0;
+}
+#tasks ul.primary{
+	border-bottom:0;
+}
+#tasks li a{
+	background:#638C82;
+	border-radius:3px 3px 3px 3px;
+	color:#FFF;
+	border:none;
+}
+#tasks li.active a{
+	border-radius:3px 3px 3px 3px;
+	background:#DB1D45;
+	color:#FFF;
+}
+a, a.active, li a.active {
+	color:#DB1D45;
+}
+p {
+	color:#666;
+}
+.block h2, h2 {
+	color:#638D83;
+}
+legend {
+	background-color:#505050;
+}
+.fieldset-legend span.summary {
+	margin-left:0;
+}
+html.js fieldset.collapsible legend a{
+	width:97%;
+	display:block;
+}
+#header-wrapper {
+	background:#FFF;
+	border-bottom:1px solid #e9e9e9;
+}
+#footer-wrapper{
+	background:url(/sites/all/themes/footheme/images/bk-footer.jpg) no-repeat;
+	padding-bottom: 20px;
+}
+.block input.form-text, .block input.form-password, .block input.form-file{
+	max-width:250px;
+}
+input.form-file, .block input.form-file {
+	margin:0 5px;
+	width:250px;
+}
+.ia-l .field-type-image, .ia-r .field-type-image, .ia-c .field-type-image {
+	text-align:left;
+}
+h2.block-title{
+	font:16px Verdana, Helvetica, sans-serif;
+	display:block;
+	padding:2px 0px 2px 20px; 
+	background:url("../images/flecha_titulo.png") no-repeat left;
+}
+h2{
+	font:22px Verdana, Helvetica, sans-serif;
+	display:block;
+	padding:0px; 
+}
+h1.article-title{
+	font:22px Verdana, Helvetica, sans-serif;
+	display:block;
+	padding:2px 20px; 
+	background:url("../images/flecha_titulo.png") no-repeat left;
+}
+h1{
+	font:28px/35px Verdana, Helvetica, sans-serif;
+	display:block;
+	padding:20px 0px;
+	color:#DB1D45;
+	text-transform:uppercase; 
+}
+h4.leer-mas{
+	font-size:12px;
+}
+#branding{
+	padding:5px 0 0;
+}
+fieldset legend {
+    border-radius: 0px;
+    display: block;
+    font-weight: 400;
+    padding: 0;
+    position: absolute;
+    top: 0;
+	left:0;
+	width:100%;
+}
+.region-header{
+	padding:5px 0 0 0;
+	width:auto;
+	position:relative;
+}
+.block-inner{
+	margin:0px;
+}
+.region-header .block{
+	margin-top:10px;
+	margin-bottom:10px;
+	float:none;
+	clear:none;
+	width:100%;
+	display:block;
+}
+#search-block-form .form-submit {
+	width:65px;
+}
+#search-block-form .form-text {
+	width:160px;
+	padding:4px;
+}
+.field-name-field-vitrina-productos .form-submit {
+	width:auto;
+}
+#edit-search-block-form--2{
+	width:170px;
+	border:1px solid #CCC;
+	border-radius:0px;
+	margin:0 !important;
+}
+input.form-button, input.form-submit{
+	background:#DB1D45;
+}
+.form-submit{
+	background:#DB1D45;
+	border:none !important;
+	color:#FFF;
+	margin:10px 0;
+}
+#block-search-form{
+	margin:0;
+	clear:none;
+	bottom:17px;
+	position:absolute;
+	right:0px;
+	width:250px;
+	z-index:2;
+}
+#search-block-form{
+	margin:0;
+	float:right;
+	width:250px;
+}
+#search-block-form .form-item-search-block-form{
+	float:left;
+}
+#search-block-form .form-actions{
+	float:right;
+	margin: 10px 0;
+}
+.article-type-vitrina .field-name-field-vitrina-productos{
+	margin-bottom:20px;
+	display:table;
+	clear:both;
+	width:100%;
+}
+.content-style{
+	border:none;
+	padding:0px;
+	background:none;
+}
+.article-type-vitrina .group-right{
+	width:17%;
+}
+.article-type-vitrina .group-left{
+	width:83%;
+	position:relative;
+}
+.article-type-vitrina .group-footer {
+	padding:20px 0;
+}
+.field-name-field-blog-categoria {
+	margin: 5px 0;
+}
+.field-name-field-blog-tags{
+	margin: 5px 0;
+}
+.rct-6 input.form-button, .rct-6 input.form-submit {
+	border-radius:3px 3px 3px 3px;
+}
+.addtoany_list a.addtoany_share_save img {
+	margin:0 5px;
+}
+#superfish-3 {
+	height:auto;
+	line-height:10px;
+	margin:20px 0;
+	width:95%;
+}
+#superfish-3 li{
+	border:none;
+}
+#superfish-3 li a{
+	border:1px solid #EDEDED;
+	margin:1px 0;
+	background:#DB1D45;
+	color:#FFF;
+}
+.sf-menu.sf-horizontal.sf-shadow ul, .sf-menu.sf-vertical.sf-shadow ul, .sf-menu.sf-navbar.sf-shadow ul ul {
+	background:#FFF;
+	border-bottom-left-radius: 0px;
+	border-top-right-radius:0px;
+	padding:0 !important;
+}
+select {
+	height:28px;
+}
+.fb_iframe_widget iframe{
+	width:200px !important;
+}
+#block-fb-social-ikuna-fan-page .fb_iframe_widget iframe {
+	border-bottom:1px solid #E4E4E4 !important;
+}
+/* MENU */
+#block-superfish-3{
+	padding:0 0 10px;
+	margin:0;
+}
+#block-superfish-1{
+	margin:10px 0;
+	font:11px Verdana, Helvetica, sans-serif;
+	float:none;
+	clear:none;
+	display:block;
+	width:100%;
+	position:relative;
+	height:41px;
+}
+
+/* menu-principal-mobile */
+#block-block-20{
+	display: none;
+}
+
+#superfish-1, #menu-principal-mobile{
+	background:#3D3A3D;
+	width:750px;
+	height:41px;
+	padding:0px;
+	float:right;
+}
+#superfish-1 li, #menu-principal-mobile li{
+	background:#3D3A3D;
+	list-style: none;
+}
+#superfish-1 li a, #menu-principal-mobile li a{
+	line-height:35px;
+	padding:3px 18px;
+	border:none;
+	color:#FFF;
+	font-size:10px;
+	text-transform:uppercase;
+}
+#superfish-1 li a.active, #menu-principal-mobile li a.active{	
+	background:#60948E;
+}
+#superfish-1 li a:hover, #menu-principal-mobile a:hover{
+	background:#60948E;
+	border-radius:0px;
+}
+
+#superfish-1 li ul{
+	width:150px !important;
+	top:41px;
+	left:0;
+}
+.rct-6 #menu-bar .menu-wrapper > ul > li > a, .rct-6 .region-header .block-content > ul > li > a {
+	border-radius:0 0 0 0;
+}
+.sf-menu.sf-style-white li:hover, .sf-menu.sf-style-white li.sfHover, .sf-menu.sf-style-white li.active a, .sf-menu.sf-style-white a:focus, .sf-menu.sf-style-white a:hover, .sf-menu.sf-style-white a:active, .sf-menu.sf-style-white.sf-navbar li li {
+	background:none;
+}
+#attribution{
+	display:none;
+}
+#block-views-home-destacado-block {
+	position:relative;
+	padding:20px 0 0;
+	margin:0;
+}
+#block-views-page-image-top-block{
+	padding:20px 0 0;
+	margin:0;
+}
+#views_slideshow_controls_text_home_destacado-block {
+	position:absolute;
+	top:110px;
+	left:0px;
+	height:61px;
+	width:980px;
+	z-index:10;
+}
+#views_slideshow_controls_text_previous_home_destacado-block a{
+    background: url("../images/icono-left.png") no-repeat;
+    display: block;
+    float: left;
+    height: 61px;
+    margin: 0;
+    text-indent: -9999px;
+    width: 53px;
+}
+#views_slideshow_controls_text_pause_home_destacado-block {
+	display:none;
+}
+#views_slideshow_controls_text_next_home_destacado-block a{
+    background: url("../images/icono-right.png") no-repeat;
+    display: block;
+    float: right;
+    height: 61px;
+    margin: 0;
+    text-indent: -9999px;
+    width: 53px;
+}
+#views_slideshow_cycle_teaser_section_home_destacado-block .views-field-title {
+	background: url("../images/bg-slideshow.png") no-repeat;
+	width: 650px;
+	height: 90px;
+	top: 223px;
+	left: 0px;
+	position: absolute;
+	text-align: left;
+	padding: 0 310px 0 20px;
+	line-height: 90px;
+}
+#views_slideshow_cycle_teaser_section_home_destacado-block .field-content a{
+	color:#333;
+}
+/* VIDEO */
+#presentacion{
+	display:block;
+	width:100%;
+	margin-bottom:20px;
+	margin-top:10px;
+}
+#presentacion .video{
+	width:440px;
+	float:left;
+}
+#presentacion .somos{
+	width:220px;
+	float:right;
+}
+/* SIDEBAR */
+.region-sidebar-second {
+	padding:20px 0;
+}
+.region-sidebar-first{
+	/* width:270px !important; */
+}
+.sidebar-first .content-inner{
+	/* margin-left:270px !important; */
+}
+.field-name-field-artesania-producto .field-item img{
+	width:380px;
+	height:380px;	
+}
+.ia-r .field-type-image{
+	float:left;
+	margin:0;
+}
+.field-name-field-artesania-img-galeria{
+	float:none;
+	display:block;
+}
+#edit-field-artesania-img-galeria{
+	float:none;
+	display:block:;
+}
+.field-name-field-artesania-producto{
+	float:left;
+}
+.article .user-picture{
+	margin:0 10px 0 0;
+}
+.article .user-picture img{
+	width:20px;
+	height:20px;
+}
+h1#page-title{
+	font:22px Verdana, Helvetica, sans-serif;
+	display:none;
+	text-transform:uppercase;
+}
+.rct-6 input.form-button {
+	background:#60948E;
+	height:28px;
+	border:none;
+	border-radius:3px;
+	color:#FFF;
+	width:120px;
+	float:left;
+	margin:0 30px 0 0;
+}
+.rct-6 input.wishlist {
+	background:#60948E;
+	height:28px;
+	border:none;
+	border-radius:3px;
+	color:#FFF;
+	font-size:12px;
+	width:75px;
+	float:left;
+	margin:0 30px 0 0;
+}
+.form-item-product-id {
+	width: 245px;
+	margin: 0 10px 0 0;
+	float:left;
+}
+.form-item-quantity {
+	width:40px;
+	height:30px;
+	float:left;
+	margin:0;
+}
+.field-name-field-vitrina-productos #edit-submit{
+	height:28px;
+	text-transform:uppercase;
+	font-weight:bold;
+}
+/* ETIQUETA VITRINA */
+.vitrina-grupo-etiqueta-ikuna {
+	border:none;
+	background:url("../images/bg_etiqueta.png") no-repeat right transparent;
+	position:absolute !important;
+	bottom:0px;
+	height:75px;	
+	left:2px;
+	padding:0 167px 0 0;
+	width:auto;
+	opacity: 0.9;
+	margin: 0;
+}
+.vitrina-grupo-etiqueta-ikuna .fieldset-wrapper{
+	margin:0px !important;
+	background:#5E574C;
+	padding:5px 10px;
+	height:65px;
+	opacity:0.9;
+}
+.vitrina-grupo-etiqueta-ikuna .vitrina-grupo-h1 {
+	font:bold 14px Verdana, Arial, sans-serif;
+	color:#FFF;
+	border-bottom:1px solid #C6C5C3;
+	display:block;
+	padding:2px 0;
+	text-transform:uppercase;
+	margin-bottom:0px;
+}
+.vitrina-grupo-etiqueta-ikuna .field-commerce-stock{
+	float:left;
+	padding:3px 0;
+	margin-right:20px;
+}
+.vitrina-grupo-etiqueta-ikuna .field-commerce-stock h2.field-label{
+	font:12px Verdana, Arial, sans-serif;
+	color:#FFF;	
+}
+.vitrina-grupo-etiqueta-ikuna .field-commerce-stock .field-items{
+	font:12px Verdana, Arial, sans-serif;
+	color:#FFF;	
+}
+.vitrina-grupo-etiqueta-ikuna .field-commerce-price {
+	float:left;
+	padding:3px 0;
+	margin-right:20px;
+}
+.vitrina-grupo-etiqueta-ikuna .field-commerce-price h2.field-label {
+	font:12px Verdana, Arial, sans-serif;
+	color:#FFF;	
+}
+.vitrina-grupo-etiqueta-ikuna .field-commerce-price .field-items{
+	font:12px Verdana, Arial, sans-serif;
+	color:#FFF;	
+}
+.vitrina-grupo-etiqueta-ikuna .field-name-author {
+	float:left;
+	padding:1px 0;
+	margin-right:20px;
+	text-transform:uppercase;
+}
+.vitrina-grupo-etiqueta-ikuna .field-name-author .field-items a{
+	font:bold 11px Verdana, Arial, sans-serif;
+	color:#C5E2D0;
+}
+.vitrina-grupo-etiqueta-ikuna .field-name-author .field-items a:hover{
+	color:#9DCEAF;
+}
+.vitrina-grupo-etiqueta-ikuna legend {
+	display:none;
+}
+.vitrina-grupo-etiqueta-ikuna .commerce-product-field-field-artesania-categoria {
+	display:block;
+	float:left;
+	width:100%;
+}
+.vitrina-grupo-etiqueta-ikuna .commerce-product-field-field-artesania-categoria ul li{
+	float:left;
+	margin:0 15px 0 0;
+}
+.vitrina-grupo-etiqueta-ikuna .commerce-product-field-field-artesania-categoria ul li span{
+	color:#FFF;
+}
+.vitrina-grupo-etiqueta-ikuna .commerce-product-field-field-artesania-categoria ul li span a{
+	color:#C5E2D0;
+	font:bold 10px Verdana, Arial, sans-serif;
+	text-transform:uppercase;
+}
+.vitrina-grupo-etiqueta-ikuna .commerce-product-field-field-artesania-categoria ul li span a:hover{
+	color:#9DCEAF;
+}
+.group-vitrina-detalle {
+	border-bottom:6px solid #69958C;
+	border-top:0px;
+	border-right:0px;
+	border-left:0px;
+}
+.group-vitrina-detalle.collapsed{
+	border-width:6px !important;
+	margin-bottom:0px !important;
+	height:9px !important;
+	min-height:0px !important;
+}
+.group-vitrina-detalle legend{
+	background-color:#B7D2C0;
+}
+.group-vitrina-detalle legend span {
+	padding:0px !important;
+}
+.group-vitrina-detalle legend span a{
+	font:bold 14px/29px Verdana, Arial, sans-serif;
+	text-transform:uppercase;
+	background:url("../images/bg-detalle.png") no-repeat right !important;
+	padding:0 0 0 10px !important;
+	height:29px;
+}
+
+/* FIN ETIQUETA VITRINA */
+/* PERFIL */ 
+.field-name-ds-user-picture {
+	background:#FFF;
+	padding:10px;
+	margin-right:10px;
+	box-shadow:1px 1px 10px 3px #E4E4E4;
+	-moz-box-shadow: 1px 1px 10px 3px #E4E4E4;
+	-webkit-box-shadow: 1px 1px 10px 3px #E4E4E4;
+}
+.view-usuario-catalogo-personal th, td {
+	padding:6px 0px !important;
+}
+.view-usuario-catalogo-personal tr td:last-child{
+	border-right:none;
+}
+.field-name-name .perfil-h1{
+	background:#638D83;
+    color: #FFF;
+	width:auto;
+    font: 20px/22px Verdana,Helvetica,sans-serif;
+    padding: 8px;
+    text-transform: uppercase;
+	display:inline-block;
+}
+#block-views-usuario-catalogo-personal-block{
+	padding:25px 0;
+}
+body.page-node-748 #block-system-main {
+	display: none;
+}
+#panel-user{
+	padding:20px 0;
+	display:block;
+	width:auto;
+	margin:0;
+}
+#panel-user li{
+	float:left;
+	display:block;
+	height:27px;
+	margin:0 20px 0 0;
+	width:auto;
+}
+#panel-user .agregar-producto{
+	background:url("../images/btn-agregar.png") no-repeat center;
+	text-indent:-9999px;
+	display:block;
+	height:27px;
+	width:28px;
+}
+#panel-user .editar-producto{
+	background:url("../images/btn-editar.png") no-repeat center;
+	text-indent:-9999px;
+	display:block;
+	height:27px;
+	width:28px;
+}
+#panel-user .eliminar-producto{
+	background:url("../images/btn-eliminar.png") no-repeat center;
+	text-indent:-9999px;
+	display:block;
+	height:27px;
+	width:26px;
+}
+#panel-user .agregar-vitrina{
+	background:url("../images/btn-vitrina.png") no-repeat center;
+	text-indent:-9999px;
+	display:block;
+	height:27px;
+	width:37px;
+}
+#panel-user .info-user{
+	background:url("../images/btn-info.png") no-repeat center;
+	text-indent:-9999px;
+	display:block;
+	height:27px;
+	width:30px;
+}
+.field-name-field-user-bio{
+	padding-right:20px;
+}
+#user_user_full_group_user_ubicacion {
+	border-bottom:3px solid #69958C;
+	margin:0;
+}
+#user_user_full_group_user_ubicacion legend{
+	background-color:#B7D2C0;
+}
+#user_user_full_group_user_ubicacion legend .fieldset-legend{
+	padding:0px;
+}
+#user_user_full_group_user_ubicacion legend a{
+	width:96% !important;
+	background: url("../images/bg-detalle.png") no-repeat scroll right center transparent !important;
+    font: bold 12px/29px Verdana,Arial,sans-serif;
+    height: 29px;
+    padding: 0 0 0 10px !important;
+    text-transform: uppercase;
+}
+.field-name-field-user-emprendedor .field-item {
+    background: #C5E2CF;
+    color: #FFFFFF;
+    display: inline-block;
+    font: 13px/20px Verdana,Helvetica,sans-serif;
+    padding: 5px;
+    text-transform: uppercase;
+    width: auto;
+	margin:5px 0;
+}
+.field-name-field-user-direccion{
+	color:#666;
+}
+/* FIN PERFIL */
+/* ETIQUETA TEASER */
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser {
+	border:none;
+	background:url("../images/etiqueta_teaser.png") no-repeat right;
+	bottom:0px;
+	height:27px;	
+	left:3px;
+	padding:0;
+	width:165px;
+}
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser legend{
+	display:none;
+}
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser .fieldset-wrapper{
+	margin:0px !important;
+	padding:3px;
+	width:158px;
+	height:50px;
+	background: #5E574C;
+}
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser .vitrina-teaser-titulo{
+	font:bold 9px Verdana, Arial, sans-serif;
+	margin:0px;
+	display:block;
+	overflow:hidden;
+	height:25px;
+	border-bottom:1px solid #C4C0B0;
+	text-transform:uppercase;
+	margin-bottom: 4px;
+}
+
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser .field-name-commerce-price h2.field-label
+{
+	display: none;
+}
+
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser .field-name-commerce-price div.field-items
+{
+	font-size: 12px;
+	float: none;
+	text-align: center;
+}
+
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser .vitrina-teaser-titulo a{
+	color:#FFF;
+}
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser .fieldset-wrapper h2.field-label{
+	font:9px Verdana, Arial, sans-serif;
+	margin:0px;
+	color: #FFF;
+}
+#node_vitrina_teaser_group_vitrina_etiqueta_teaser .fieldset-wrapper .field-items{
+	font:9px Verdana, Arial, sans-serif;
+	margin:0px;
+	color: #FFF;
+}
+/* PERFIL ARTESANO */
+
+#edit-field-artesania-img-catalogo {
+	float:none;
+	margin:0 10px;
+	display:none;
+}
+#edit-field-artesania-img-principal {
+	float:none;
+	margin:0 10px;
+	display:block;
+}
+/* FIN PERFIL ARTESANO */
+
+#block-views-home-popular-block{
+	padding:8px;
+	background:#FFF;
+	margin:20px 0;
+}
+#block-views-home-nuevo-block{
+	padding:8px;
+	background:#FFF;
+	margin:20px 0;
+}
+#block-views-vitrina-tienda-block{
+	padding:5px;
+	background:#FFF;
+}
+.view-id-vitrina_tienda{
+	padding:10px 0;
+}
+.view-id-vitrina_tienda .views-row{
+    display: block;
+    float: left;
+    margin: 1px;
+    padding: 3px;
+    width: auto;
+}
+#block-views-vitrina-categoria-block{
+	padding:5px;
+	background:#FFF;
+}
+.view-id-vitrina_categoria{
+	padding:10px 0;
+}
+.view-id-vitrina_categoria .views-row{
+    display: block;
+    float: left;
+    margin: 1px;
+    padding: 3px;
+    width: auto;
+}
+.field-type-taxonomy-term-reference ul li {
+	display:block;
+}
+#edit-product-id {
+	margin:0px;
+}
+.view-mode-teaser.article-type-vitrina {
+	width: 170px;
+	display: block;
+	padding: 3px;
+	background: #FFFFFF;
+	float:left;
+	margin:3px;
+	position:relative;
+	margin-bottom: 30px;
+}
+.view-mode-teaser.article-type-blog {
+	width: 655px;
+	display: block;
+	border: 1px solid #EBEBEB;
+	padding: 10px;
+	background: #FFFFFF;
+	margin:10px 0;
+}
+.detail-title{
+	font:12px Verdana, Helvetica, sans-serif;
+	display:block;
+	text-transform:uppercase;
+}
+#edit-quantity{
+	width:30px;
+	float:left;
+	border:1px solid #CCC;
+	padding:3px;
+	border-radius:0px;
+	text-align:center;
+	margin-right:10px;
+}
+.form-item-quantity label{
+	display:none;
+}
+.addtoany_list a {
+	padding:0px;
+}
+.addtoany span{
+	padding:20px 0;
+}
+/* REDES SOCIALES */
+#redes_sociales {
+	position: fixed;
+	top: 92px;
+	right: 0px;
+	background: #444;
+	padding: 7px;
+	border-radius: 10px 0px 0px 10px;
+	border: 1px solid #333;
+}
+#redes_sociales .facebook{
+	text-indent:-9999px;
+	display:block;
+	width:100%;
+	background:url("../images/icono_facebook.png") no-repeat;
+	width:27px;
+	height:27px;
+	float:right;
+	margin:0 10px 0 0;
+}
+#redes_sociales .twitter{
+	text-indent:-9999px;
+	display:block;
+	width:100%;
+	background:url("../images/icono_twitter.png") no-repeat;
+	width:27px;
+	height:27px;
+	float:right;
+	margin:0;
+}
+
+#redes_sociales .google{
+	text-indent:-9999px;
+	display:block;
+	width:100%;
+	background:url("../images/icono_google.png") no-repeat;
+	width:27px;
+	height:27px;
+	float:right;
+	margin:0 10px 0 0;
+}
+
+/* FOOTER */
+
+#footer-panels-wrapper{
+	margin: 0;
+}
+#footer-panels-wrapper ul
+{
+	list-style: none;
+margin-left: 60px;
+}
+
+#footer-panels-wrapper h2
+{
+	padding: 16px;
+	padding-left: 60px;
+	font-weight: bold;
+}
+
+#footer-panels-wrapper .region.region-four-first h2
+{
+	background: url(/sites/all/themes/footheme/images/icono-ikuna.png) no-repeat left !important;
+	
+}
+
+/*
+#footer-panels-wrapper .region.region-four-second
+{
+	width: 25% !important;
+	
+}
+*/
+
+#footer-panels-wrapper .region.region-four-second h2
+{
+	background: url(/sites/all/themes/footheme/images/icono-prensa.png) no-repeat left !important;
+	
+}
+
+#footer-panels-wrapper .region.region-four-third h2
+{
+	background: url(/sites/all/themes/footheme/images/icono-mail.png) no-repeat left !important;
+	
+}
+
+#footer-panels-wrapper .region.region-four-fourth h2
+{
+	background: url(/sites/all/themes/footheme/images/icono-pagos.png) no-repeat left !important;
+	
+}
+
+#footer-panels-wrapper .region.region-four-fourth p
+{
+	margin-left: 55px;
+}
+
+#copyright {
+	display:block;
+	float:left;
+	margin:20px 0;
+}
+#copyright .logo{
+	width:61px;
+	height:70px;
+	display:block;
+	background:url(../images/logo_footer.png) no-repeat center;
+	margin-right:30px;
+	float:left;
+}
+#copyright .socialab{
+	width:60px;
+	height:80px;
+	display:block;
+	background:url(../images/socialab.png) no-repeat center;
+	margin-right:30px;
+	float:left;
+	text-indent:-9999px;
+}
+#copyright .injuv{
+	width:76px;
+	height:67px;
+	display:block;
+	background:url(../images/injuv.png) no-repeat center;
+	margin-right:25px;
+	float:left;
+	text-indent:-9999px;
+}
+#copyright .inclusivo{
+	width:76px;
+	height:67px;
+	display:block;
+	background:url(../images/inclusivo.png) no-repeat center;
+	margin-right:25px;
+	float:left;
+	text-indent:-9999px;
+}
+#copyright .startup-chile{
+	width:130px;
+	height:67px;
+	display:block;
+	background:url(../images/Startup.png) no-repeat center;
+	margin-right:25px;
+	float:left;
+	text-indent:-9999px;
+}
+#copyright p{
+	font-size:10px;
+	color:#999;
+	line-height:30px;
+	margin:0;
+	float:left;
+}
+#copyright .aquarela{
+	font-size:10px;
+	color:#999;
+	float:right;
+}
+#copyright .aquarela a{
+	color:#DB1D45;
+}
+#right-footer{
+	float:right;
+	margin-top: 60px;
+}
+
+#left-footer{
+	float:left;
+	width:50%;
+}
+
+#right-footer p, #left-footer p
+{
+	margin-bottom: 0px;
+	color: #ffffff;
+}
+
+#left-footer img{
+	float:left;
+	margin-right:15px;
+}
+
+#left-footer p strong
+{
+	text-transform: uppercase;
+}
+
+
+#right-footer .menu-footer{
+	display:block;
+	float:right;
+}
+#right-footer .menu-footer a{
+	color: #999999;
+    font-size: 10px;
+	font-weight:bold;
+    line-height: 30px;
+    margin: 0;
+	text-transform:uppercase;
+}
+#right-footer .menu-footer a:hover{
+	color:#DB1D45;
+}
+#right-footer .menu-footer span{
+	color: #999999;
+    font-size: 10px;
+}
+#block-block-3{
+	width:100%;
+	display:block;
+	float:left;
+	clear:none;
+	padding-top: 25px;
+}
+#block-superfish-2{
+	float:right;
+	width:330px;
+	display:block;
+	clear:none;
+	margin:20px 0;
+}
+#superfish-2{
+	display:block;
+	width:100%;
+}
+#superfish-2 li{
+	margin-right:5px;
+	padding:5px;
+	text-transform:uppercase;
+	font-size:10px;
+	line-height:55px;
+}
+#superfish-2 li a{
+	color:#999;
+}
+#superfish-2 li a:hover{
+	color:#DB1D45;
+}
+
+
+
+
+
+/* BUSQUEDA */
+
+.search-snippet strong {
+	background-color:#DB1D45;
+}
+.search-result h3.title{
+	font: 18px/20px Verdana, Arial, sans-serif;
+	color:#638D83;
+}
+/* COMUNIDAD */
+
+.view-comunidad-emprendedores .views-row, .view-artesanos-destacados .views-row{
+    background: none repeat scroll 0 0 #FFFFFF;
+    display: block;
+    float: left;
+    margin: 8px;
+    padding: 3px;
+    position: relative;
+    width: 165px;
+}
+
+.view-artesanos-destacados .views-row{
+width: 298px;
+}
+
+.view-comunidad-emprendedores .views-row .views-field-name, .view-artesanos-destacados .views-row .views-field-name{
+	background: url("../images/etiqueta_teaser.png") no-repeat scroll right center;
+    border: medium none;
+    height: 27px;
+    left: 3px;
+    padding: 0;
+    position: absolute !important;
+    bottom: 15px;
+    width: 165px;
+}
+.view-artesanos-destacados .views-row .views-field-name
+{
+	width: 298px;
+}
+
+.view-comunidad-emprendedores .views-row .views-field-name a, .view-artesanos-destacados .views-row .views-field-name a{
+	display: block;
+    font: bold 11px/26px Verdana,Arial,sans-serif;
+    height: 27px;
+	padding:0 5px;
+    margin: 0;
+    overflow: hidden;
+	background: #5E574C;
+    text-transform: uppercase;
+	color:#FFF;
+	width:111px;
+	font-size: 9px;
+}
+
+.view-artesanos-destacados .views-row .views-field-name a{
+width: 244px;
+}
+/* CARRO COMPRA */
+
+#menu-4592-1
+{
+	margin-left: 30px;
+}
+
+#menu-4592-1 a, #menu-4592-1 a:hover, #menu-4592-1 a:active
+{
+	background: url(http://ikuna.cl/sites/all/themes/footheme/images/icono-carro-compra.png) no-repeat 0px 8px !important;
+	text-indent: -9999px;
+}
+
+.views-field-edit-quantity input{
+	width:50px !important;
+}
+
+.line-item-summary-checkout.last a
+{
+	padding: 12px;
+	background: #DB1D45;
+	color: #fff;
+	border-radius: 5px;
+	font-weight: bold;
+	text-transform: uppercase;
+	font-size: 14px;
+	text-shadow: 3px 2px 1px #a61533;
+	border: 1px solid #c01a3d;
+}
+
+.line-item-summary .links.inline
+{
+	display: block;
+	margin-top: 20px;
+}
+
+.locality
+{
+	margin-right: 5px;
+
+}
+
+.addressfield-container-inline > div.form-item
+{
+	margin-right: 2em;
+}
+
+iframe
+{
+	max-width: 100%;
+}
+
+#payment-details
+{
+	margin-top: 50px;
+}
+
+.views-exposed-widget.views-widget-sort-order .form-item-sort-order label
+{
+	text-indent: -9999px;
+}
+
+.webform-client-form .webform-component
+{
+	margin-top: 30px;
+}
+
+/* Shipping Services Icons */
+
+label[for=edit-commerce-shipping-shipping-service-correos-shipping-service] 
+{
+background: url(/sites/all/themes/footheme/images/shipping-correos.jpg) no-repeat;
+display: inline-block;
+height: 40px;
+line-height: 45px;
+padding-left: 120px;
+}
+
+label[for=edit-commerce-shipping-shipping-service-dhlchile-shipping-service]  
+{
+	background: url(/sites/all/themes/footheme/images/shipping-dhl.jpg) no-repeat;
+	display: inline-block;
+	height: 40px;
+	width: 300px;
+	line-height: 45px;
+	padding-left: 120px;
+}
+
+.form-item-commerce-payment-payment-method, .form-item-commerce-shipping-shipping-service
+{
+	border-bottom: 1px dotted #cccccc;
+	padding: 10px 0px 25px 0px;
+}
+
+.commerce-paypal-icons
+{
+	padding: 5px 0px 0px 18px;
+}
+
+.commerce-paypal-icons .label
+{
+	display: none;
+}
+
+.commerce-khipu-logo
+{
+	vertical-align: bottom;
+	margin-right: 5px;
+}
+
+#block-webform-client-block-482
+{
+	display: none;
+	width: 800px;
+	height: 270px;
+	background: url(/sites/all/themes/footheme/images/popup-background.jpg) no-repeat;
+}
+
+#block-webform-client-block-482 h2
+{
+	display: none;
+}
+
+#block-webform-client-block-482 form
+{
+    padding: 85px 0px 0px 325px;
+}
+
+body.page-node-482 div.links
+{
+	display: none;
+}
+
+#block-webform-client-block-482 #webform-component-email
+{
+	display: inline-block;
+}
+
+#block-webform-client-block-482 #webform-component-soy-artesano
+{
+	display: inline-block;
+	margin-left: 30px;
+}
+
+body.page-node-493 .links
+{
+	display: none;
+}
+
+/* Ideas Style */
+
+.down-inactive
+{
+	display: none !important;
+}
+
+.reset-active
+{
+	display: none !important;
+}
+
+.vud-widget-updown .up-inactive:hover, .vud-widget-updown .down-inactive:hover, .vud-widget-updown .up-active, .vud-widget-updown .down-active
+{
+	font-size: 15px !important;
+	color:#555555 !important;
+}
+
+.vud-widget-updown .updown-score
+{
+	color:#555555 !important;
+}
+
+body.page-type-idea .group-left
+{
+	width: 14%;
+}
+
+body.page-type-idea .field-name-field-idea-galeria figure
+{
+	width: 30%;
+float: left;
+margin-right: 5px;
+}
+
+body.page-type-idea #block-block-16 h2
+{
+	margin-bottom: 20px;
+}
+
+body.page-type-idea #block-block-16 .content a
+{
+	text-indent: -5000px;
+display: inline-block;
+height: 50px;
+width: 50px;
+float: left;
+margin-left: 10px;
+}
+
+body.page-type-idea #block-block-16 a.facebook
+{
+	background: url(/sites/all/themes/footheme/images/idea-ikuna-facebook.png) no-repeat;
+	margin-left: 20px;
+}
+
+body.page-type-idea #block-block-16 a.twitter
+{
+	background: url(/sites/all/themes/footheme/images/idea-ikuna-twitter.png) no-repeat;
+	
+}
+
+.view-ideas .idea
+{
+width: 30%;
+display: inline-block;
+border: 1px dotted #cccccc;
+padding: 5px;
+margin: 8px;
+float: left;
+}
+
+.field-type-image
+{
+	max-width: 100%;
+}
+
+.view-ideas .idea .views-field-field-idea-imagen-principal
+{
+	float:left;
+	margin-right: 8px;
+}
+
+.vud-widget-updown
+{
+	width: 110px;
+}
+
+.vud-widget-updown div.updown-up.up-inactive, .vud-widget-updown div.updown-up.up-active {
+float: left;
+font-size: 10px;
+width: 98px;
+background: #DB1D45;
+color: #FFFFFF;
+border-radius: 5px;
+padding: 5px;
+height: 15px;
+border: 2px solid #ccc;
+}
+
+.vud-widget-updown div.updown-up.up-active
+{
+	background: #dd5d76;
+}
+
+.vud-widget-updown div.updown-up.up-inactive:before
+{
+	content: "Yo compraría";
+}
+
+.vud-widget-updown div.updown-up.up-active:before
+{
+	content: "Gracias";
+}
+
+body.not-logged-in .vud-widget-updown div.updown-up.up-active:before
+{
+	content: "Yo compraría";
+}
+
+body.not-logged-in .vud-widget-updown div.updown-up.up-active
+{
+	cursor: pointer; 
+}
+
+.vud-widget-updown .up-inactive:hover, .vud-widget-updown .down-inactive:hover, .vud-widget-updown .up-active, .vud-widget-updown .down-active
+{
+	font-size: 10px !important;
+	color: #FFFFFF !important;
+	background: #b21e3b;
+}
+
+.vud-widget-updown div.updown-down
+{
+	display: none;	
+}
+
+/*Concursos*/
+.field-name-field-concurso-afiche
+{
+	background: #eeeeee;
+padding: 20px;
+}
+.view-usuario-catalogo-personal .view-content
+{
+	margin-top: 15px;	
+}
+.view-id-concursos_ .item-list ul
+{
+	margin-top:15px;
+}
+.view-id-concursos_ .item-list ul li
+{
+	float: left;
+width: 30%;
+background: #eeeeee;
+padding: 10px;
+list-style: none;
+margin: 0;
+}
+
+#block-block-17{
+	margin-bottom: 10px;
+}
+#block-block-18{
+	margin-bottom: 35px;
+}
+#block-block-17 p a{
+	background: url(/sites/all/themes/footheme/images/artesanos-destacados-home.png) no-repeat;
+	display: block;
+	height: 50px;
+	width: 200px;
+	text-indent: -5000px;
+}
+
+#block-block-18 .content a{
+	background: url(/sites/all/themes/footheme/images/regalos-navidad-home.png) no-repeat;
+	display: block;
+	height: 50px;
+	width: 204px;
+	text-indent: -5000px;
+}
+
+.commerce-webpay-logo
+{
+	left:0;
+	vertical-align: bottom;
+	margin-right: 5px;
+}
+
+#edit-field-artesania-transporte-und-0-value, #edit-field-artesania-ganancia-und-0-value{
+	/*border:none !important;*/
+	cursor: default;
+}
+
+#edit-field-artesania-transporte-und-0-value:focus, #edit-field-artesania-ganancia-und-0-value:focus{
+	background: none repeat scroll 0 0 #FAFAFA;
+}
+
+/* Página navidad */
+.menu-navidad div {
+    float: left;
+}
+
+.menu-navidad div.first {
+width: 0px;
+height: 210px;
+/*background: url(/sites/all/themes/footheme/images/regalos-navidad-menu.jpg) no-repeat #FFFFFF;*/
+}
+
+.menu-navidad div a {
+    width: 140px;
+    height: 40px;
+    display: inline-block;
+    padding-top: 170px;
+    font-size: 22px;
+}
+
+.menu-navidad div a:hover {
+	opacity: 0.8;
+}
+.menu-navidad div.polola a, .menu-navidad div.ahijados a, .menu-navidad div.colegas a {
+    background: #69948a;
+    color: #ffffff;
+    width: 140px;
+    height: 40px;
+    display: inline-block;
+    padding-top: 170px;
+}
+
+/* Equipo */
+.page-node-257 .field-name-body .equipo-integrantes{
+width: 100%;
+float: left;
+margin-bottom: 20px;
+}
+.page-node-257 .field-name-body span{
+float: left;
+width: 150px;
+text-align: center;
+margin-right: 25px;
+}
+.page-node-257 .field-name-body span img{
+max-height: 140px;
+}

@@ -1,0 +1,579 @@
+<?php
+
+function ikuna_form_alter(&$form, &$form_state, $form_id) {
+   // Change the redirect URI for Product Add forms.
+  if($form_id == 'commerce_checkout_form_checkout'){
+    $form['#attached']['js'][] = drupal_get_path('module', 'ikuna') . '/ikuna.js';
+  }
+
+  if ($form_id == 'commerce_product_ui_product_form') {
+    //Incluir Js
+    $form['#attached']['js'][] = drupal_get_path('module', 'ikuna') . '/ikuna.js';
+    //add redirect
+    $form['actions']['submit']['#submit'][] = 'ikuna_product_form_submit';
+  }
+}
+
+
+/**
+ * Submit callback for commerce_product_ui_product_form().
+ */
+function ikuna_product_form_submit($form, &$form_state) {
+   // Set the redirect based on the button clicked.
+  if ($form_state['triggering_element']['#parents'][0] == 'save_continue') {
+    $form_state['redirect'] = 'admin/commerce/products/add/' . strtr($form_state['commerce_product']->type, array('_' => '-'));
+  }
+  elseif (arg(2) == 'products' && arg(3) == 'add' && !user_access('administer commerce_product entities')) {
+    // Redirect to product view page.
+    $product_id = $form_state['commerce_product']->product_id;
+        if (empty($product_id)) {
+            $form_state['redirect'] = 'tienda';
+        } else {
+            $form_state['redirect'] = 'tienda';
+        }
+  }
+  elseif (arg(2) == 'products' && arg(3) == 'add') {
+    $form_state['redirect'] = 'admin/commerce/products';
+  }
+}
+
+
+function get_productos_by_seller($order)
+{
+
+  $array_proveedores = array();
+  // Calcula peso del carro de compras por cada proveedor
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  
+  // Loop over each line item on the order.
+  foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+    // Get the weight value of product line items.
+
+    if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) 
+    {
+          
+        $line_item_weight = commerce_physical_product_line_item_weight($line_item_wrapper->value());
+        $line_item_volume = commerce_physical_product_line_item_dimensions($line_item_wrapper->value());
+
+
+        //if (!empty($line_item_weight['weight'])) {
+          $line_phisical["weight"] = $line_item_weight['weight'];
+        //}
+
+
+        //if (!empty($line_item_volume['length']) && !empty($line_item_volume['width']) && !empty($line_item_volume['height'])){ 
+          $line_phisical["volume"] = $line_item_volume['length'] * $line_item_volume['width'] * $line_item_volume['height'] * $line_item_wrapper->quantity->value();
+        //}
+
+        $array_actual = $line_item_wrapper->commerce_product->creator->field_user_direccion->value();
+        $line_phisical["origen"] = $array_actual["administrative_area"];
+
+        $aux_array = array();
+        if (array_key_exists($line_item_wrapper->commerce_product->creator->mail->value(), $array_proveedores)){
+          $aux_array = $array_proveedores[$line_item_wrapper->commerce_product->creator->mail->value()]["productos"];
+        }
+
+        $line_phisical["id_producto"] = $line_item_wrapper->commerce_product->product_id->value();
+        $line_phisical["precio"] = $line_item_wrapper->commerce_product->commerce_price->amount->value();
+        $line_phisical["nombre"] = $line_item_wrapper->commerce_product->title->value();
+        $line_phisical["tienda"] = $line_item_wrapper->commerce_product->creator->name->value();
+        $line_phisical["id_tienda"] = $line_item_wrapper->commerce_product->creator->uid->value();
+        $line_phisical["cantidad"] = $line_item_wrapper->quantity->value();
+        $line_phisical["transporte"] = $line_item_wrapper->commerce_product->field_artesania_transporte->value();
+
+        $aux_array[] = $line_phisical;
+
+        $array_artesano = array("email"=>$line_item_wrapper->commerce_product->creator->mail->value(), "telefonos" => $line_item_wrapper->commerce_product->creator->field_telefono_celular->value(), "productos" => $aux_array);
+        $array_proveedores[$line_item_wrapper->commerce_product->creator->mail->value()] = $array_artesano;
+
+    }
+  }
+  return $array_proveedores;
+
+}
+
+function get_comuna_by_codigo($codigo)
+{
+      $array_comunas = get_array_comunas();
+
+return($array_comunas[$codigo]['nombre']);
+}
+
+function get_array_comunas()
+{
+
+   $array_comunas = array(
+'ABO'=> array('nombre' => t('ALGARROBO'), 'zona' => 'cerca'),
+'LAS'=>array('nombre' => t('ALTO BIOBIO'), 'zona' => 'cerca'),
+'ADC'=>array('nombre' => t('ALTO DEL CARMEN'), 'zona' => 'cerca'),
+'AHO'=>array('nombre' => t('ALTO HOSPICIO'), 'zona' => 'cerca'),
+'ACD'=>array('nombre' => t('ANCUD'), 'zona' => 'cerca'),
+'JAB'=>array('nombre' => t('ANDACOLLO'), 'zona' => 'cerca'),
+'ZOL'=>array('nombre' => t('ANGOL'), 'zona' => 'cerca'),
+'LTH'=>array('nombre' => t('ANTARTICA'), 'zona' => 'lejos'),
+'ANF'=>array('nombre' => t('ANTOFAGASTA'), 'zona' => 'cerca'),
+'AUO'=>array('nombre' => t('ANTUCO'), 'zona' => 'cerca'),
+'ARA'=>array('nombre' => t('ARAUCO'), 'zona' => 'cerca'),
+'ARI'=>array('nombre' => t('ARICA'), 'zona' => 'lejos'),
+'WPA'=>array('nombre' => t('AYSEN'), 'zona' => 'lejos'),
+'BUI'=>array('nombre' => t('BUIN'), 'zona' => 'intra'),
+'BLN'=>array('nombre' => t('BULNES'), 'zona' => 'cerca'),
+'CDO'=>array('nombre' => t('CABILDO'), 'zona' => 'cerca'),
+'LTJ'=>array('nombre' => t('CABO DE HORNOS'), 'zona' => 'cerca'),
+'CRO'=>array('nombre' => t('CABRERO'), 'zona' => 'cerca'),
+'CJC'=>array('nombre' => t('CALAMA'), 'zona' => 'cerca'),
+'CBU'=>array('nombre' => t('CALBUCO'), 'zona' => 'cerca'),
+'CLR'=>array('nombre' => t('CALDERA'), 'zona' => 'cerca'),
+'LC7'=>array('nombre' => t('CALERA'), 'zona' => 'cerca'),
+'ZCT'=>array('nombre' => t('CALERA DE TANGO'), 'zona' => 'cerca'),
+'CLG'=>array('nombre' => t('CALLE LARGA'), 'zona' => 'cerca'),
+'CLL'=>array('nombre' => t('CANELA'), 'zona' => 'cerca'),
+'CRH'=>array('nombre' => t('CARAHUE'), 'zona' => 'cerca'),
+'CRT'=>array('nombre' => t('CARTAGENA'), 'zona' => 'cerca'),
+'ZCB'=>array('nombre' => t('CASABLANCA'), 'zona' => 'cerca'),
+'CTR'=>array('nombre' => t('CASTRO'), 'zona' => 'cerca'),
+'CAT'=>array('nombre' => t('CATEMU'), 'zona' => 'cerca'),
+'CQE'=>array('nombre' => t('CAUQUENES'), 'zona' => 'cerca'),
+'FWN'=>array('nombre' => t('CAÑETE'), 'zona' => 'cerca'),
+'FCV'=>array('nombre' => t('CERRILLOS'), 'zona' => 'cerca'),
+'CHA'=>array('nombre' => t('CHANCO'), 'zona' => 'cerca'),
+'ZHN'=>array('nombre' => t('CHAÑARAL'), 'zona' => 'cerca'),
+'ZHE'=>array('nombre' => t('CHEPICA'), 'zona' => 'cerca'),
+'CYE'=>array('nombre' => t('CHIGUAYANTE'), 'zona' => 'cerca'),
+'CLH'=>array('nombre' => t('CHILE CHICO'), 'zona' => 'cerca'),
+'YAI'=>array('nombre' => t('CHILLAN'), 'zona' => 'cerca'),
+'CHB'=>array('nombre' => t('CHIMBARONGO'), 'zona' => 'cerca'),
+'ZHL'=>array('nombre' => t('CHOLCHOL'), 'zona' => 'cerca'),
+'CHO'=>array('nombre' => t('CHONCHI'), 'zona' => 'cerca'),
+'CBR'=>array('nombre' => t('COBQUECURA'), 'zona' => 'cerca'),
+'CHM'=>array('nombre' => t('COCHAMO'), 'zona' => 'cerca'),
+'CGY'=>array('nombre' => t('CODEGUA'), 'zona' => 'cerca'),
+'CUH'=>array('nombre' => t('COIHUECO'), 'zona' => 'cerca'),
+'CNO'=>array('nombre' => t('COINCO'), 'zona' => 'cerca'),
+'CLB'=>array('nombre' => t('COLBUN'), 'zona' => 'cerca'),
+'GEG'=>array('nombre' => t('COLINA'), 'zona' => 'cerca'),
+'CPI'=>array('nombre' => t('COLLIPULLI'), 'zona' => 'cerca'),
+'CTO'=>array('nombre' => t('COLTAUCO'), 'zona' => 'cerca'),
+'COB'=>array('nombre' => t('COMBARBALA'), 'zona' => 'cerca'),
+'CCP'=>array('nombre' => t('CONCEPCION'), 'zona' => 'cerca'),
+'GKF'=>array('nombre' => t('CONCON'), 'zona' => 'cerca'),
+'CTT'=>array('nombre' => t('CONSTITUCION'), 'zona' => 'cerca'),
+'CTM'=>array('nombre' => t('CONTULMO'), 'zona' => 'cerca'),
+'CPO'=>array('nombre' => t('COPIAPO'), 'zona' => 'cerca'),
+'COQ'=>array('nombre' => t('COQUIMBO'), 'zona' => 'cerca'),
+'KQQ'=>array('nombre' => t('CORONEL'), 'zona' => 'cerca'),
+'CRC'=>array('nombre' => t('CORRAL'), 'zona' => 'cerca'),
+'GXQ'=>array('nombre' => t('COYHAIQUE'), 'zona' => 'lejos'),
+'CUC'=>array('nombre' => t('CUNCO'), 'zona' => 'cerca'),
+'CCC'=>array('nombre' => t('CURACAUTIN'), 'zona' => 'cerca'),
+'CDV'=>array('nombre' => t('CURACO DE VELEZ'), 'zona' => 'cerca'),
+'CNE'=>array('nombre' => t('CURANILAHUE'), 'zona' => 'cerca'),
+'CRE'=>array('nombre' => t('CURARREHUE'), 'zona' => 'cerca'),
+'CEP'=>array('nombre' => t('CUREPTO'), 'zona' => 'cerca'),
+'ZCQ'=>array('nombre' => t('CURICO'), 'zona' => 'cerca'),
+'DLE'=>array('nombre' => t('DALCAHUE'), 'zona' => 'cerca'),
+'DAG'=>array('nombre' => t('DIEGO DE ALMAGRO'), 'zona' => 'cerca'),
+'RDD'=>array('nombre' => t('DOÑIHUE'), 'zona' => 'cerca'),
+'GJR'=>array('nombre' => t('EL CARMEN'), 'zona' => 'cerca'),
+'EMT'=>array('nombre' => t('EL MONTE'), 'zona' => 'cerca'),
+'EQO'=>array('nombre' => t('EL QUISCO'), 'zona' => 'cerca'),
+'ETB'=>array('nombre' => t('EL TABO'), 'zona' => 'cerca'),
+'EPD'=>array('nombre' => t('EMPEDRADO'), 'zona' => 'cerca'),
+'ECA'=>array('nombre' => t('ERCILLA'), 'zona' => 'cerca'),
+'FCY'=>array('nombre' => t('ESTACION CENTRAL'), 'zona' => 'intra'),
+'FRD'=>array('nombre' => t('FLORIDA'), 'zona' => 'cerca'),
+'FIE'=>array('nombre' => t('FREIRE'), 'zona' => 'cerca'),
+'FRN'=>array('nombre' => t('FREIRINA'), 'zona' => 'cerca'),
+'FSA'=>array('nombre' => t('FRESIA'), 'zona' => 'cerca'),
+'FRT'=>array('nombre' => t('FRUTILLAR'), 'zona' => 'cerca'),
+'FTF'=>array('nombre' => t('FUTALEUFU'), 'zona' => 'cerca'),
+'FTO'=>array('nombre' => t('FUTRONO'), 'zona' => 'cerca'),
+'GAO'=>array('nombre' => t('GALVARINO'), 'zona' => 'cerca'),
+'GEA'=>array('nombre' => t('GORBEA'), 'zona' => 'cerca'),
+'GRA'=>array('nombre' => t('GRANEROS'), 'zona' => 'cerca'),
+'HJA'=>array('nombre' => t('HIJUELAS'), 'zona' => 'cerca'),
+'HLE'=>array('nombre' => t('HUALAÑE'), 'zona' => 'cerca'),
+'KQL'=>array('nombre' => t('HUALQUI'), 'zona' => 'cerca'),
+'HRA'=>array('nombre' => t('HUARA'), 'zona' => 'cerca'),
+'HCO'=>array('nombre' => t('HUASCO'), 'zona' => 'cerca'),
+'FCZ'=>array('nombre' => t('HUECHURABA'), 'zona' => 'intra'),
+'ILL'=>array('nombre' => t('ILLAPEL'), 'zona' => 'cerca'),
+'FDA'=>array('nombre' => t('INDEPENDENCIA'), 'zona' => 'intra'),
+'IQQ'=>array('nombre' => t('IQUIQUE'), 'zona' => 'cerca'),
+'GEK'=>array('nombre' => t('ISLA DE MAIPO'), 'zona' => 'cerca'),
+'IPC'=>array('nombre' => t('ISLA DE PASCUA'), 'zona' => 'lejos'),
+'IJF'=>array('nombre' => t('JUAN FERNANDEZ'), 'zona' => 'lejos'),
+'FDB'=>array('nombre' => t('LA CISTERNA'), 'zona' => 'intra'),
+'LCR'=>array('nombre' => t('LA CRUZ'), 'zona' => 'cerca'),
+'LEA'=>array('nombre' => t('LA ESTRELLA'), 'zona' => 'cerca'),
+'FDD'=>array('nombre' => t('LA FLORIDA'), 'zona' => 'intra'),
+'FDE'=>array('nombre' => t('LA GRANJA'), 'zona' => 'intra'),
+'LHI'=>array('nombre' => t('LA HIGUERA'), 'zona' => 'cerca'),
+'LLC'=>array('nombre' => t('LA LIGUA'), 'zona' => 'cerca'),
+'LPT'=>array('nombre' => t('LA PINTANA'), 'zona' => 'intra'),
+'FDF'=>array('nombre' => t('LA REINA'), 'zona' => 'intra'),
+'LSC'=>array('nombre' => t('LA SERENA'), 'zona' => 'cerca'),
+'ZLU'=>array('nombre' => t('LA UNION'), 'zona' => 'cerca'),
+'LRC'=>array('nombre' => t('LAGO RANCO'), 'zona' => 'cerca'),
+'LVE'=>array('nombre' => t('LAGO VERDE'), 'zona' => 'cerca'),
+'LSG'=>array('nombre' => t('LAMPA'), 'zona' => 'cerca'),
+'LNC'=>array('nombre' => t('LANCO'), 'zona' => 'cerca'),
+'LCB'=>array('nombre' => t('LAS CABRAS'), 'zona' => 'cerca'),
+'FDG'=>array('nombre' => t('LAS CONDES'), 'zona' => 'intra'),
+'LTR'=>array('nombre' => t('LAUTARO'), 'zona' => 'cerca'),
+'ZLB'=>array('nombre' => t('LEBU'), 'zona' => 'cerca'),
+'LNN'=>array('nombre' => t('LICANTEN'), 'zona' => 'cerca'),
+'LIC'=>array('nombre' => t('LIMACHE'), 'zona' => 'cerca'),
+'ZLR'=>array('nombre' => t('LINARES'), 'zona' => 'cerca'),
+'LEC'=>array('nombre' => t('LITUECHE'), 'zona' => 'cerca'),
+'GRK'=>array('nombre' => t('LLAILLAY'), 'zona' => 'cerca'),
+'LLQ'=>array('nombre' => t('LLANQUIHUE'), 'zona' => 'cerca'),
+'FDH'=>array('nombre' => t('LO BARNECHEA'), 'zona' => 'intra'),
+'LLL'=>array('nombre' => t('LOLOL'), 'zona' => 'cerca'),
+'LOC'=>array('nombre' => t('LONCOCHE'), 'zona' => 'cerca'),
+'LGV'=>array('nombre' => t('LONGAVI'), 'zona' => 'cerca'),
+'LQY'=>array('nombre' => t('LONQUIMAY'), 'zona' => 'cerca'),
+'ZAO'=>array('nombre' => t('LOS ALAMOS'), 'zona' => 'cerca'),
+'LAC'=>array('nombre' => t('LOS ANDES'), 'zona' => 'cerca'),
+'LSQ'=>array('nombre' => t('LOS ANGELES'), 'zona' => 'cerca'),
+'LAG'=>array('nombre' => t('LOS LAGOS'), 'zona' => 'cerca'),
+'LMM'=>array('nombre' => t('LOS MUERMOS'), 'zona' => 'cerca'),
+'SUS'=>array('nombre' => t('LOS SAUCES'), 'zona' => 'cerca'),
+'LV7'=>array('nombre' => t('LOS VILOS'), 'zona' => 'cerca'),
+'LOT'=>array('nombre' => t('LOTA'), 'zona' => 'cerca'),
+'LMO'=>array('nombre' => t('LUMACO'), 'zona' => 'cerca'),
+'MCH'=>array('nombre' => t('MACHALI'), 'zona' => 'cerca'),
+'FDJ'=>array('nombre' => t('MACUL'), 'zona' => 'intra'),
+'MFL'=>array('nombre' => t('MAFIL'), 'zona' => 'cerca'),
+'FDK'=>array('nombre' => t('MAIPU'), 'zona' => 'intra'),
+'ZML'=>array('nombre' => t('MALLOA'), 'zona' => 'cerca'),
+'MCG'=>array('nombre' => t('MARCHIHUE'), 'zona' => 'cerca'),
+'MAE'=>array('nombre' => t('MARIA ELENA'), 'zona' => 'cerca'),
+'MAO'=>array('nombre' => t('MARIA PINTO'), 'zona' => 'cerca'),
+'ZMA'=>array('nombre' => t('MAULE'), 'zona' => 'cerca'),
+'MAU'=>array('nombre' => t('MAULLIN'), 'zona' => 'cerca'),
+'MJS'=>array('nombre' => t('MEJILLONES'), 'zona' => 'cerca'),
+'MPO'=>array('nombre' => t('MELIPEUCO'), 'zona' => 'cerca'),
+'MPA'=>array('nombre' => t('MELIPILLA'), 'zona' => 'intra'),
+'ZMO'=>array('nombre' => t('MOLINA'), 'zona' => 'cerca'),
+'MPC'=>array('nombre' => t('MONTE PATRIA'), 'zona' => 'cerca'),
+'MUL'=>array('nombre' => t('MULCHEN'), 'zona' => 'cerca'),
+'NAC'=>array('nombre' => t('NACIMIENTO'), 'zona' => 'cerca'),
+'ZGA'=>array('nombre' => t('NANCAGUA'), 'zona' => 'cerca'),
+'PNT'=>array('nombre' => t('NATALES'), 'zona' => 'cerca'),
+'NVD'=>array('nombre' => t('NAVIDAD'), 'zona' => 'cerca'),
+'NRE'=>array('nombre' => t('NEGRETE'), 'zona' => 'cerca'),
+'NNH'=>array('nombre' => t('NINHUE'), 'zona' => 'cerca'),
+'NOG'=>array('nombre' => t('NOGALES'), 'zona' => 'cerca'),
+'NIP'=>array('nombre' => t('NUEVA IMPERIAL'), 'zona' => 'cerca'),
+'OLM'=>array('nombre' => t('OLMUE'), 'zona' => 'cerca'),
+'ZOS'=>array('nombre' => t('OSORNO'), 'zona' => 'cerca'),
+'OVL'=>array('nombre' => t('OVALLE'), 'zona' => 'cerca'),
+'PHT'=>array('nombre' => t('PADRE HURTADO'), 'zona' => 'cerca'),
+'PIO'=>array('nombre' => t('PAIGUANO'), 'zona' => 'cerca'),
+'PAI'=>array('nombre' => t('PAILLACO'), 'zona' => 'cerca'),
+'GEJ'=>array('nombre' => t('PAINE'), 'zona' => 'cerca'),
+'PLA'=>array('nombre' => t('PALMILLA'), 'zona' => 'cerca'),
+'PGP'=>array('nombre' => t('PANGUIPULLI'), 'zona' => 'cerca'),
+'PQE'=>array('nombre' => t('PANQUEHUE'), 'zona' => 'cerca'),
+'PPO'=>array('nombre' => t('PAPUDO'), 'zona' => 'cerca'),
+'PDS'=>array('nombre' => t('PAREDONES'), 'zona' => 'cerca'),
+'PRR'=>array('nombre' => t('PARRAL'), 'zona' => 'cerca'),
+'PLO'=>array('nombre' => t('PELARCO'), 'zona' => 'cerca'),
+'PMO'=>array('nombre' => t('PEMUCO'), 'zona' => 'cerca'),
+'PNH'=>array('nombre' => t('PENCAHUE'), 'zona' => 'cerca'),
+'PQO'=>array('nombre' => t('PERQUENCO'), 'zona' => 'cerca'),
+'PTK'=>array('nombre' => t('PETORCA'), 'zona' => 'ceil(value)rca'),
+'PEO'=>array('nombre' => t('PEUMO'), 'zona' => 'cerca'),
+'GSI'=>array('nombre' => t('PEÑAFLOR'), 'zona' => 'intra'),
+'FDY'=>array('nombre' => t('PEÑALOLEN'), 'zona' => 'intra'),
+'OPC'=>array('nombre' => t('PICA'), 'zona' => 'cerca'),
+'PDG'=>array('nombre' => t('PICHIDEGUA'), 'zona' => 'cerca'),
+'PMU'=>array('nombre' => t('PICHILEMU'), 'zona' => 'cerca'),
+'PNO'=>array('nombre' => t('PINTO'), 'zona' => 'cerca'),
+'PIR'=>array('nombre' => t('PIRQUE'), 'zona' => 'intra'),
+'PQN'=>array('nombre' => t('PITRUFQUEN'), 'zona' => 'cerca'),
+'PZO'=>array('nombre' => t('PORTEZUELO'), 'zona' => 'cerca'),
+'ZPR'=>array('nombre' => t('PORVENIR'), 'zona' => 'cerca'),
+'PAM'=>array('nombre' => t('POZO ALMONTE'), 'zona' => 'cerca'),
+'FDN'=>array('nombre' => t('PROVIDENCIA'), 'zona' => 'intra'),
+'PCV'=>array('nombre' => t('PUCHUNCAVI'), 'zona' => 'cerca'),
+'ZPU'=>array('nombre' => t('PUCON'), 'zona' => 'cerca'),
+'FDO'=>array('nombre' => t('PUDAHUEL'), 'zona' => 'intra'),
+'PTA'=>array('nombre' => t('PUENTE ALTO'), 'zona' => 'intra'),
+'PMC'=>array('nombre' => t('PUERTO MONTT'), 'zona' => 'cerca'),
+'PCY'=>array('nombre' => t('PUERTO OCTAY'), 'zona' => 'cerca'),
+'ZPV'=>array('nombre' => t('PUERTO VARAS'), 'zona' => 'cerca'),
+'PNQ'=>array('nombre' => t('PUMANQUE'), 'zona' => 'cerca'),
+'PTQ'=>array('nombre' => t('PUNITAQUI'), 'zona' => 'cerca'),
+'PUQ'=>array('nombre' => t('PUNTA ARENAS'), 'zona' => 'lejos'),
+'PQU'=>array('nombre' => t('PUQUELDON'), 'zona' => 'cerca'),
+'PUR'=>array('nombre' => t('PUREN'), 'zona' => 'cerca'),
+'PRE'=>array('nombre' => t('PURRANQUE'), 'zona' => 'cerca'),
+'PUT'=>array('nombre' => t('PUTAENDO'), 'zona' => 'cerca'),
+'PTR'=>array('nombre' => t('PUTRE'), 'zona' => 'cerca'),
+'QIL'=>array('nombre' => t('QUEILEN'), 'zona' => 'cerca'),
+'QLO'=>array('nombre' => t('QUELLON'), 'zona' => 'cerca'),
+'QMC'=>array('nombre' => t('QUEMCHI'), 'zona' => 'cerca'),
+'QCO'=>array('nombre' => t('QUILACO'), 'zona' => 'cerca'),
+'QRA'=>array('nombre' => t('QUILICURA'), 'zona' => 'intra'),
+'QEO'=>array('nombre' => t('QUILLECO'), 'zona' => 'cerca'),
+'QLL'=>array('nombre' => t('QUILLON'), 'zona' => 'cerca'),
+'QTA'=>array('nombre' => t('QUILLOTA'), 'zona' => 'cerca'),
+'QPE'=>array('nombre' => t('QUILPUE'), 'zona' => 'cerca'),
+'QCC'=>array('nombre' => t('QUINTA DE TILCOCO'), 'zona' => 'cerca'),
+'FDP'=>array('nombre' => t('QUINTA NORMAL'), 'zona' => 'intra'),
+'QTO'=>array('nombre' => t('QUINTERO'), 'zona' => 'cerca'),
+'QRH'=>array('nombre' => t('QUIRIHUE'), 'zona' => 'cerca'),
+'QRC'=>array('nombre' => t('RANCAGUA'), 'zona' => 'cerca'),
+'RAU'=>array('nombre' => t('RAUCO'), 'zona' => 'cerca'),
+'FDQ'=>array('nombre' => t('RECOLETA'), 'zona' => 'intra'),
+'RNA'=>array('nombre' => t('RENAICO'), 'zona' => 'cerca'),
+'RGO'=>array('nombre' => t('RENGO'), 'zona' => 'cerca'),
+'REQ'=>array('nombre' => t('REQUINOA'), 'zona' => 'cerca'),
+'RTO'=>array('nombre' => t('RETIRO'), 'zona' => 'cerca'),
+'RBN'=>array('nombre' => t('RIO BUENO'), 'zona' => 'cerca'),
+'RRO'=>array('nombre' => t('RIO CLARO'), 'zona' => 'cerca'),
+'RNC'=>array('nombre' => t('RIO NEGRO'), 'zona' => 'cerca'),
+'RML'=>array('nombre' => t('ROMERAL'), 'zona' => 'cerca'),
+'SAF'=>array('nombre' => t('SAGRADA FAMILIA'), 'zona' => 'cerca'),
+'SCA'=>array('nombre' => t('SALAMANCA'), 'zona' => 'cerca'),
+'QTN'=>array('nombre' => t('SAN ANTONIO'), 'zona' => 'cerca'),
+'SBD'=>array('nombre' => t('SAN BERNARDO'), 'zona' => 'cerca'),
+'SCS'=>array('nombre' => t('SAN CARLOS'), 'zona' => 'cerca'),
+'SCQ'=>array('nombre' => t('SAN CLEMENTE'), 'zona' => 'cerca'),
+'ZEB'=>array('nombre' => t('SAN ESTEBAN'), 'zona' => 'cerca'),
+'SFP'=>array('nombre' => t('SAN FELIPE'), 'zona' => 'cerca'),
+'SF7'=>array('nombre' => t('SAN FERNANDO'), 'zona' => 'cerca'),
+'IUT'=>array('nombre' => t('SAN GREGORIO'), 'zona' => 'cerca'),
+'GIY'=>array('nombre' => t('SAN IGNACIO'), 'zona' => 'cerca'),
+'SJA'=>array('nombre' => t('SAN JAVIER'), 'zona' => 'cerca'),
+'SJS'=>array('nombre' => t('SAN JOSE DE MAIPO'), 'zona' => 'intra'),
+'SJC'=>array('nombre' => t('SAN JUAN DE LA COSTA'), 'zona' => 'cerca'),
+'FDS'=>array('nombre' => t('SAN MIGUEL'), 'zona' => 'intra'),
+'SNL'=>array('nombre' => t('SAN NICOLAS'), 'zona' => 'cerca'),
+'SPL'=>array('nombre' => t('SAN PABLO'), 'zona' => 'cerca'),
+'ZPM'=>array('nombre' => t('SAN PEDRO'), 'zona' => 'cerca'),
+'SPX'=>array('nombre' => t('SAN PEDRO DE ATACAMA'), 'zona' => 'cerca'),
+'SPZ'=>array('nombre' => t('SAN PEDRO DE LA PAZ'), 'zona' => 'cerca'),
+'GIP'=>array('nombre' => t('SAN RAFAEL'), 'zona' => 'cerca'),
+'SRO'=>array('nombre' => t('SAN ROSENDO'), 'zona' => 'cerca'),
+'SVT'=>array('nombre' => t('SAN VICENTE'), 'zona' => 'cerca'),
+'SBB'=>array('nombre' => t('SANTA BARBARA'), 'zona' => 'cerca'),
+'ZSC'=>array('nombre' => t('SANTA CRUZ'), 'zona' => 'cerca'),
+'SAJ'=>array('nombre' => t('SANTA JUANA'), 'zona' => 'cerca'),
+'SCL'=>array('nombre' => t('SANTIAGO'), 'zona' => 'intra'),
+'SGD'=>array('nombre' => t('SIERRA GORDA'), 'zona' => 'cerca'),
+'TNT'=>array('nombre' => t('TALAGANTE'), 'zona' => 'cerca'),
+'TLX'=>array('nombre' => t('TALCA'), 'zona' => 'cerca'),
+'ZTO'=>array('nombre' => t('TALCAHUANO'), 'zona' => 'cerca'),
+'GTE'=>array('nombre' => t('TALTAL'), 'zona' => 'cerca'),
+'ZCO'=>array('nombre' => t('TEMUCO'), 'zona' => 'cerca'),
+'TEN'=>array('nombre' => t('TENO'), 'zona' => 'cerca'),
+'TSC'=>array('nombre' => t('TEODORO SCHMIDT'), 'zona' => 'cerca'),
+'TRM'=>array('nombre' => t('TIERRA AMARILLA'), 'zona' => 'cerca'),
+'EXI'=>array('nombre' => t('TILTIL'), 'zona' => 'intra'),
+'TRU'=>array('nombre' => t('TIRUA'), 'zona' => 'cerca'),
+'TOC'=>array('nombre' => t('TOCOPILLA'), 'zona' => 'cerca'),
+'TMC'=>array('nombre' => t('TOME'), 'zona' => 'cerca'),
+'ZEN'=>array('nombre' => t('TRAIGUEN'), 'zona' => 'cerca'),
+'THC'=>array('nombre' => t('TREGUACO'), 'zona' => 'cerca'),
+'TAL'=>array('nombre' => t('TUCAPEL'), 'zona' => 'cerca'),
+'ZAL'=>array('nombre' => t('VALDIVIA'), 'zona' => 'cerca'),
+'VLR'=>array('nombre' => t('VALLENAR'), 'zona' => 'cerca'),
+'VAP'=>array('nombre' => t('VALPARAISO'), 'zona' => 'cerca'),
+'VCH'=>array('nombre' => t('VICHUQUEN'), 'zona' => 'cerca'),
+'VIC'=>array('nombre' => t('VICTORIA'), 'zona' => 'cerca'),
+'VCA'=>array('nombre' => t('VICUÑA'), 'zona' => 'cerca'),
+'VLN'=>array('nombre' => t('VILCUN'), 'zona' => 'cerca'),
+'VGE'=>array('nombre' => t('VILLA ALEGRE'), 'zona' => 'cerca'),
+'VIA'=>array('nombre' => t('VILLA ALEMANA'), 'zona' => 'cerca'),
+'VRR'=>array('nombre' => t('VILLARRICA'), 'zona' => 'cerca'),
+'FDW'=>array('nombre' => t('VITACURA'), 'zona' => 'intra'),
+'KNA'=>array('nombre' => t('VIÑA DEL MAR'), 'zona' => 'cerca'),
+'YBB'=>array('nombre' => t('YERBAS BUENAS'), 'zona' => 'cerca'),
+'YGY'=>array('nombre' => t('YUNGAY'), 'zona' => 'cerca'),
+'JJG'=>array('nombre' => t('ZAPALLAR'), 'zona' => 'cerca'),
+'NQN'=>array('nombre' => t('ÑIQUEN'), 'zona' => 'cerca'),
+'FDL'=>array('nombre' => t('ÑUÑOA'), 'zona' => 'intra'),
+    );
+  return $array_comunas;
+}
+
+
+function ikuna_commerce_checkout_complete($order) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  $line_items = $order_wrapper->commerce_line_items->value();
+  if (is_array($line_items)) {
+    foreach ($line_items as $line_item) {
+      if (in_array($line_item->type, commerce_product_line_item_types())) {
+        $product = commerce_product_load_by_sku($line_item->line_item_label);
+
+        // Subtract the sold amount from the available stock level.
+        //$qty = (int) $line_item->quantity;
+        //module_load_include('inc', 'commerce_stock', 'commerce_stock.rules');
+        //commerce_stock_adjust($product, -$qty);
+
+        // Disable the product if we have no stock left
+        $product_wrapper = entity_metadata_wrapper('commerce_product', $product);
+        if ($product_wrapper->commerce_stock->value() <= 0) {
+          $product_wrapper->status->set(0);
+          $result = $product_wrapper->save();
+
+          if ($result) {
+            watchdog('commerce_stock', 'Product %sku stock level reached 0, status set to 0.', array('%sku' => $product->sku));
+          }
+          else {
+            watchdog('commerce_stock', 'Failed attempt to disable product %sku', array('%sku' => $product->sku), WATCHDOG_ERROR);
+          }
+        }
+      }   
+    }
+  }
+}
+
+function ikuna_webform_submission_insert($node, $submission) {
+  
+  // Registro Popup Webform
+  if ($node->nid == 482) {
+    
+    $submitted_data = $submission->data;
+    $email = $submitted_data[1]['value'][0];
+    
+    $rol = array(2 => true); // Usuario Autenticado
+    if($submitted_data[2]['value'][0] == 'soy_artesano')
+    {
+      $rol = array(5 => true); // Usuario Seller
+    }
+
+    $find_user = user_load_by_mail($email);
+
+    //print_r($node);
+    //die;
+
+    if(!user_load_by_mail($email))
+    {
+      // Need to populate following data for registering the user.
+      $user_data = array();
+      $user_data['init'] = $email;
+      $user_data['mail'] = $email;
+      $user_data['name'] = $email;
+      $user_data['pass'] = $email;
+      $user_data['status'] = 1;
+      $user_data['roles'] = $rol;
+      $usertemp = user_save('', $user_data);
+
+      if($usertemp)
+      {
+          if(user_authenticate($email, $email))
+          {
+            $user_obj = user_load_by_name($email);
+            $form_state = array();
+            $form_state['uid'] = $user_obj->uid;      
+            user_login_submit(array(), $form_state);
+            return true;
+          }
+          else
+          {
+            return false;
+          }
+       }
+    	
+    }
+
+  }
+
+  // Registro Artesanos Webform
+  if ($node->nid == 493) 
+  {
+    $data_artesano = array();
+
+    $submitted_data = $submission->data;
+
+    foreach ($submitted_data as $subdata) {
+      $data_artesano[] = $subdata;
+    }
+
+
+    $email = $data_artesano[0]['value'][0];
+    $password = $data_artesano[1]['value'][0];
+    $tienda = $data_artesano[2]['value'][0];
+    $nombre_artesano = $data_artesano[3]['value'][0];
+    $apellido_artesano = $data_artesano[4]['value'][0];
+    $biografia = $data_artesano[5]['value'][0];
+    $direccion = $data_artesano[6]['value'][0];
+    $ciudad = $data_artesano[7]['value'][0];
+    $comuna = $data_artesano[8]['value'][0];
+    $telefono = $data_artesano[9]['value'][0];
+
+
+    if(!user_load_by_mail($email) && !user_load_by_name($tienda))
+    {
+      // Need to populate following data for registering the user.
+
+      $new_user_save  = array(
+              'name'  =>  $tienda,
+              'pass'  =>  $password,
+              'mail'  =>  $email,
+              'status'  =>  1,
+              'roles' => array(5 => true),
+              'init' => $email,
+              'field_user_direccion' => array(
+                  "und" => array(
+                      "0" => array(
+                            "first_name"  => $nombre_artesano,
+                            "last_name" => $apellido_artesano,
+                            "country" => "CL", /* Obligatorio */
+                            "thoroughfare" => $direccion,
+                            "locality" => $ciudad,
+                            "administrative_area" => $comuna, 
+                        ))),
+              'field_user_emprendedor' => array(
+                  "und" => array(
+                      "0" => array("value"  => $nombre_artesano." ".$apellido_artesano))),
+              'field_user_bio' => array(
+                  "und" => array(
+                      "0" => array("value"  => $biografia))),
+              'field_telefono_celular' => array(
+                  "und" => array(
+                      "0" => array("value"  => $telefono))),
+             );
+             
+        // save user
+        $usertemp = user_save( NULL, $new_user_save );
+
+        if($usertemp)
+        {
+          if(user_authenticate($tienda, $password))
+          {
+            $user_obj = user_load_by_name($tienda);
+            $form_state = array();
+            $form_state['uid'] = $user_obj->uid;      
+            user_login_submit(array(), $form_state);
+            return true;
+          }
+          else
+          {
+            return false;
+          }
+        }
+
+    }
+
+  }
+}
+// function ikuna_exit()
+// {
+//   global $user;
+//   echo "maraca";
+//   if ( !$user->uid && !isset($_COOKIE['MuestraPopupRegistro']) ) 
+//   {
+//     drupal_add_js('http://buckwilson.me/lightboxme/jquery.lightbox_me.js', 'external');
+//     drupal_add_js("(function ($) { $(document).ready(function () { $('#block-webform-client-block-482').lightbox_me({
+//          centered: true
+//          }); }); })(jQuery);", "inline");
+    
+//     setcookie("MuestraPopupRegistro", 1, time()+60*60*24*30*12, "/");
+
+//   }
+// }

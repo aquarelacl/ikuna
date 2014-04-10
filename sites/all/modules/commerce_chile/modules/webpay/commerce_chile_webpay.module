@@ -1,0 +1,96 @@
+<?php
+
+/**
+ * @file
+ * Webpay Chile.
+ */
+
+function commerce_webpay_commerce_payment_method_info(){
+	$payment_methods = array();
+	$payment_methods['commerce_webpay'] = array(
+		'base' => 'commerce_webpay',
+		'title' => 'Webpay',
+		'description' => 'Modulo para el metodo de pago webpay',
+		'offsite' => TRUE,
+		'offsite_autoredirect' => TRUE,
+		'terminal' => FALSE,
+		'active' => TRUE
+	);
+	return $payment_methods;
+}
+
+function commerce_webpay_commerce_payment_url($transaction){
+	$url = "http://aquarela.cl";
+	return $url;	
+}
+
+function commerce_payment_webpay_aquarela_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  $form = array();
+  
+  $total = $order->commerce_order_total["und"][0]["data"]["components"][0]["price"]["amount"];	
+  
+  if (!empty($order->data['commerce_payment_webpay_aquarela'])) {
+    $pane_values += $order->data['commerce_payment_webpay_aquarela'];
+  }
+  $urlActual = "http://ikuna.cl/checkout/".$order->order_number."/review";
+  
+  $pane_values += array(
+    'name' => '',
+    'TBK_TIPO_TRANSACCION' => 'TR_NORMAL',
+    'TBK_MONTO' => $total,
+    'TBK_ORDEN_COMPRA' => date("Ymdhis"),
+    'TBK_ID_SESSION' =>  date("Ymdhis"),
+    'TBK_URL_EXITO' => 'http://aquarela.cl',
+    'TBK_URL_FRACASO' => $urlActual   
+  );
+  	
+  $form['TBK_TIPO_TRANSACCION'] = array(
+    '#type' => 'item',
+    '#title' => t('Tipo de transacción'),
+    '#markup' => $pane_values['TBK_TIPO_TRANSACCION'],
+    //'#description' => t(''),
+    //'#default_value' => $pane_values['TBK_TIPO_TRANSACCION'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_MONTO'] = array(
+    '#type' => 'item',
+    '#title' => t('Monto'),
+    '#markup' => $pane_values['TBK_MONTO'],
+    //'#description' => t(''),
+    //'#default_value' => $pane_values['TBK_MONTO'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_ORDEN_COMPRA'] = array(
+    '#type' => 'item',
+    '#title' => t('Orden de la compra'),
+    '#markup' => $pane_values['TBK_ORDEN_COMPRA'],
+    //'#description' => t(''),
+    //'#default_value' => $pane_values['TBK_ORDEN_COMPRA'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_ID_SESSION'] = array(
+    '#type' => 'item',
+    '#title' => t('ID SESIÓN'),
+    '#markup' => $pane_values['TBK_ID_SESSION'],
+    //'#description' => t(''),
+    //'#default_value' => $pane_values['TBK_ID_SESSION'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_URL_EXITO'] = array(
+    '#type' => 'item',
+    '#title' => t('TBK_URL_EXITO'),
+    '#markup' => $pane_values['TBK_URL_EXITO'],
+    //'#description' => t(''),
+    //'#default_value' => $pane_values['TBK_URL_EXITO'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_URL_FRACASO'] = array(
+    '#type' => 'item',
+    '#title' => t('TBK_URL_FRACASO'),
+    '#markup' =>  $pane_values['TBK_URL_FRACASO'],
+    //'#description' => t(''),
+    //'#default_value' => $pane_values['TBK_URL_FRACASO'],
+    //'#required' => TRUE,
+  );
+  return $form;
+}

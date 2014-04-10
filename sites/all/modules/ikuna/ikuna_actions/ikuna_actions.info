@@ -1,0 +1,11 @@
+name = Ikuna actions
+description = Exposes Drupal actions to Ikuna.
+package = Aquarela Modules
+core = 7.x
+
+; Information added by drupal.org packaging script on 2013-02-25
+version = "7.x-5.5"
+core = "7.x"
+project = "ikuna actions"
+datestamp = "1361829358"
+

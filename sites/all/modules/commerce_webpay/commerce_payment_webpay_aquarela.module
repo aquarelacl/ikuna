@@ -1,0 +1,241 @@
+<?php
+
+/*
+ * By Pablo Caro Grant
+*/
+
+function commerce_payment_webpay_aquarela_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods['commerce_payment_webpay_aquarela'] = array(
+    'title' => t('WebPay Aquarela'),
+    'description' => t('Integración con webpay.'),
+    'active' => TRUE,
+  );
+
+  return $payment_methods;
+}
+
+/**
+ * Payment method callback: submit form.
+ */
+function commerce_payment_webpay_aquarela_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  $form = array();
+  
+  $total = $order->commerce_order_total["und"][0]["data"]["components"][0]["price"]["amount"];	
+  // Merge in values from the order.
+  if (!empty($order->data['commerce_payment_webpay_aquarela'])) {
+    $pane_values += $order->data['commerce_payment_webpay_aquarela'];
+  }
+  $urlActual = "http://ikuna.cl/checkout/".$order->order_number."/review";
+  // Merge in default values.
+  $pane_values += array(
+    'name' => '',
+    'TBK_TIPO_TRANSACCION' => 'TR_NORMAL',
+    'TBK_MONTO' => $total,
+    'TBK_ORDEN_COMPRA' => date("Ymdhis"),
+    'TBK_ID_SESSION' =>  date("Ymdhis"),
+    'TBK_URL_EXITO' => 'http://aquarela.cl',
+    'TBK_URL_FRACASO' => $urlActual   
+  );
+  	
+  $form['TBK_TIPO_TRANSACCION'] = array(
+    '#type' => 'item',
+    '#title' => t('Tipo de transacción'),
+    '#markup' => $pane_values['TBK_TIPO_TRANSACCION'],
+    //'#description' => t('This is a demonstration field coded to fail validation for single character values.'),
+    //'#default_value' => $pane_values['TBK_TIPO_TRANSACCION'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_MONTO'] = array(
+    '#type' => 'item',
+    '#title' => t('Monto'),
+    '#markup' => $pane_values['TBK_MONTO'],
+    //'#description' => t('This is a demonstration field coded to fail validation for single character values.'),
+    //'#default_value' => $pane_values['TBK_MONTO'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_ORDEN_COMPRA'] = array(
+    '#type' => 'item',
+    '#title' => t('Orden de la compra'),
+    '#markup' => $pane_values['TBK_ORDEN_COMPRA'],
+    //'#description' => t('This is a demonstration field coded to fail validation for single character values.'),
+    //'#default_value' => $pane_values['TBK_ORDEN_COMPRA'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_ID_SESSION'] = array(
+    '#type' => 'item',
+    '#title' => t('ID SESIÓN'),
+    '#markup' => $pane_values['TBK_ID_SESSION'],
+    //'#description' => t('This is a demonstration field coded to fail validation for single character values.'),
+    //'#default_value' => $pane_values['TBK_ID_SESSION'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_URL_EXITO'] = array(
+    '#type' => 'item',
+    '#title' => t('TBK_URL_EXITO'),
+    '#markup' => $pane_values['TBK_URL_EXITO'],
+    //'#description' => t('This is a demonstration field coded to fail validation for single character values.'),
+    //'#default_value' => $pane_values['TBK_URL_EXITO'],
+    //'#required' => TRUE,
+  );
+  $form['TBK_URL_FRACASO'] = array(
+    '#type' => 'item',
+    '#title' => t('TBK_URL_FRACASO'),
+    '#markup' =>  $pane_values['TBK_URL_FRACASO'],
+    //'#description' => t('This is a demonstration field coded to fail validation for single character values.'),
+    //'#default_value' => $pane_values['TBK_URL_FRACASO'],
+    //'#required' => TRUE,
+  );
+  	
+  return $form;
+}
+
+/**
+ * Payment method callback: submit form validation.
+ */
+function commerce_payment_webpay_aquarela_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  // Throw an error if a long enough name was not provided.
+  if (strlen($pane_values['name']) < 2) {
+    form_set_error(implode('][', array_merge($form_parents, array('name'))), t('Error, en estos momentos no es posible realizar tu compra. Intenta mas tarde.'));
+
+    // Even though the form error is enough to stop the submission of the form,
+    // it's not enough to stop it from a Commerce standpoint because of the
+    // combined validation / submission going on per-pane in the checkout form.
+    return FALSE;
+  }
+}
+
+/**
+ * Payment method callback: submit form submission.
+ */
+function commerce_payment_webpay_aquarela_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  $order->data['commerce_payment_webpay_aquarela'] = $pane_values;
+
+  commerce_payment_webpay_aquarela_transaction($payment_method, $order, $charge, $pane_values['name']);
+}
+
+/**
+ * Creates an example payment transaction for the specified charge amount.
+ *
+ * @param $payment_method
+ *   The payment method instance object used to charge this payment.
+ * @param $order
+ *   The order object the payment applies to.
+ * @param $charge
+ *   An array indicating the amount and currency code to charge.
+ * @param $name
+ *   The name entered on the submission form.
+ */
+function commerce_payment_webpay_aquarela_transaction($payment_method, $order, $charge, $name) {
+  $transaction = commerce_payment_transaction_new('commerce_payment_webpay_aquarela', $order->order_id);
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  $transaction->message = 'Name: @name';
+  $transaction->message_variables = array('@name' => $name);
+
+  commerce_payment_transaction_save($transaction);
+}
+
+function commerce_payment_webpay_aquarela_redirect_form($form, &$form_state, $order, $payment_method) {
+  // Return an error if the enabling action's settings haven't been configured.
+    $settings = array(
+    // Return to the previous page when payment is canceled
+    'cancel_return' => url('checkout/' . $order->order_id . '/payment/review/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Return to the payment redirect page for processing successful payments
+    'return' => url('fuck/' . $order->order_id . '/review/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+
+    // Specify the current payment method instance ID in the notify_url
+    'payment_method' => $payment_method['instance_id'],
+  );
+
+  return commerce_payment_webpay_aquarela_order_form($form, $form_state, $order, $payment_method['settings'] + $settings);
+}
+
+/**
+ * Builds a Website Payments Standard form from an order object.
+ *
+ * @param $order
+ *   The fully loaded order being paid for.
+ * @param $settings
+ *   An array of settings used to build out the form, including:
+ *   - server: which server to use, either sandbox or live
+ *   - business: the PayPal e-mail address the payment submits to
+ *   - cancel_return: the URL PayPal should send the user to on cancellation
+ *   - return: the URL PayPal should send the user to on successful payment
+ *   - currency_code: the PayPal currency code to use for this payment if the
+ *     total for the order is in a non-PayPal supported currency
+ *   - language: the PayPal language code to use on the payment form
+ *   - payment_action: the PayPal payment action to use: sale, authorization,
+ *     or order
+ *   - payment_method: optionally the name of the Commerce payment method to
+ *     include in the IPN notify_url
+ *
+ * @return
+ *   A renderable form array.
+ */
+function commerce_payment_webpay_aquarela_order_form($form, &$form_state, $order, $settings) {
+	$data = array(
+    // Specify the checkout experience to present to the user.
+    'cmd' => '_cart',
+
+    // Signify we're passing in a shopping cart from our system.
+    'upload' => 1,
+
+    // The store's PayPal e-mail address
+    'business' => "pablo.caro@aquarela.cl",
+
+    // The path PayPal should send the IPN to
+    'notify_url' => "http://ikuna.cl/checkout/21/shipping",
+
+    // Set the correct character set
+    'charset' => 'utf-8',
+
+    // Do not display a comments prompt at PayPal
+    'no_note' => 1,
+
+    // Do not display a shipping address prompt at PayPal
+    'no_shipping' => 1,
+
+    // Return to the review page when payment is canceled
+    'cancel_return' => "http://ikuna.cl/checkout/21/shipping",
+
+    // Return to the payment redirect page for processing successful payments
+    'return' => "http://ikuna.cl/checkout/21/shipping",
+
+    // Return to this site with payment data in the POST
+    'rm' => 2,
+
+    // The type of payment action PayPal should take with this order
+    'paymentaction' => "http://ikuna.cl/checkout/21/shipping",
+
+    // Set the currency and language codes
+    'currency_code' => "http://ikuna.cl/checkout/21/shipping",
+    'lc' => "http://ikuna.cl/checkout/21/shipping",
+
+    // Use the timestamp to generate a unique invoice number
+    'invoice' => "http://ikuna.cl/checkout/21/shipping",
+
+    // Define a single item in the cart representing the whole order
+    'amount_1' => "http://ikuna.cl/checkout/21/shipping",
+    'item_name_1' => "http://ikuna.cl/checkout/21/shipping",
+    'on0_1' => "http://ikuna.cl/checkout/21/shipping",
+    'os0_1' => "http://ikuna.cl/checkout/21/shipping",
+  );	
+  $form['#action'] = "aquarela.cl";	
+  foreach ($data as $name => $value) {
+    if (!empty($value)) {
+      $form[$name] = array('#type' => 'hidden', '#value' => $value);
+    }
+  }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Pagar'),
+  );
+
+  return $form;
+}
+

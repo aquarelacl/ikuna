@@ -1,0 +1,92 @@
+<?php
+
+ function ikuna_actions_file_info() {
+   return array('ikuna_actions.rules');
+ }
+
+/**
+ * @file
+ * Exposes Drupal actions for sending Twitter messages.
+ */
+
+/**
+ * Implements hook_action_info().
+ */
+
+// function ikuna_actions_action_info() {
+//   return array(
+//     'agregar_envios' => array(
+//       'type' => 'comment',
+//       'label' => t('Agregar Envíos'),
+//       'configurable' => TRUE,
+//       //'behavior' => array('changes_property'),
+//       //'triggers' => array('comment_presave', 'comment_insert', 'comment_update'),
+//     )
+//   );
+// }
+
+// function ikuna_actions_action_info() {
+//   $actions = array();
+
+//   $actions['agregar_envios'] = array(
+//     'label' => t('Agregar Envíos'),
+//     'parameter' => array(
+//       'commerce_order' => array(
+//         'type' => 'commerce_order',
+//         'label' => t('Order'),
+//       )
+//     ),
+//     'group' => t('Ikuna'),
+//     //'base' => 'commerce_checkout_action_send_account_email',
+//     //'access callback' => 'rules_system_integration_access',
+//   );
+//   $actions['commerce_checkout_complete'] = array(
+//     'label' => t('Complete checkout for an order'),
+//     'parameter' => array(
+//       'commerce_order' => array(
+//         'type' => 'commerce_order',
+//         'label' => t('Order in checkout'),
+//       ),
+//     ),
+//     'group' => t('Commerce Checkout'),
+//     'callbacks' => array(
+//       'execute' => 'commerce_checkout_rules_complete_checkout',
+//     ),
+//   );
+
+//   return $actions;
+// }
+
+// function ikuna_actions_rules_action_info() {
+//   $actions = array();
+
+//   $actions['agregar_envios'] = array(
+//     'label' => t('Agregar Envíos'),
+//     'parameter' => array(
+//       'commerce_order' => array(
+//         'type' => 'commerce_order',
+//         'label' => t('Order'),
+//       )
+//     ),
+//     'group' => t('Ikuna'),
+//     //'base' => 'commerce_checkout_action_send_account_email',
+//     //'access callback' => 'rules_system_integration_access',
+//   );
+//   $actions['commerce_checkout_complete'] = array(
+//     'label' => t('Complete checkout for an order'),
+//     'parameter' => array(
+//       'commerce_order' => array(
+//         'type' => 'commerce_order',
+//         'label' => t('Order in checkout'),
+//       ),
+//     ),
+//     'group' => t('Commerce Checkout'),
+//     'callbacks' => array(
+//       'execute' => 'commerce_checkout_rules_complete_checkout',
+//     ),
+//   );
+
+//   return $actions;
+// }
+
+

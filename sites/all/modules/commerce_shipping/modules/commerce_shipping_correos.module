@@ -1,0 +1,270 @@
+<?php
+
+/**
+ * @file
+ * Define cálculo de shipping de Correos de Chile.
+ */
+
+
+/**
+ * Implements hook_commerce_shipping_method_info().
+ */
+function commerce_shipping_correos_commerce_shipping_method_info() {
+  $shipping_methods = array();
+
+  $shipping_methods['correos'] = array(
+    'title' => t('Correos de Chile'),
+    'description' => t('Calcula costo de Correos de Chile'),
+  );
+
+  return $shipping_methods;
+}
+
+/**
+ * Implements hook_commerce_shipping_service_info().
+ */
+function commerce_shipping_correos_commerce_shipping_service_info() {
+  $shipping_services = array();
+
+  $shipping_services['correos_shipping_service'] = array(
+    'title' => t('Correos shipping service'),
+    'description' => t('Un servicio que calcula el costo de shipping de un producto mediante el web service de correos de chile.'),
+    'display_title' => t('Correos de Chile'),
+    'shipping_method' => 'correos',
+    'price_component' => 'shipping',
+    'callbacks' => array(
+      'rate' => 'commerce_shipping_correos_service_rate',
+      'details_form' => 'commerce_shipping_correos_service_details_form',
+      //'details_form_validate' => 'commerce_shipping_correos_service_details_form_validate',
+      //'details_form_submit' => 'commerce_shipping_correos_service_details_form_submit',
+    ),
+  );
+
+  return $shipping_services;
+}
+
+/**
+ * Shipping service callback: returns a base price array for a shipping service
+ * calculated for the given order.
+ */
+function commerce_shipping_correos_service_rate($shipping_service, $order) {
+  global $user;
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  // Determine the shipping profile reference field name for the order.
+  $field_name = commerce_physical_order_shipping_field_name($order);
+  $shipping_profile = $order_wrapper->{$field_name}->value();
+
+  
+  // Prepare the shipping address for use in the request.
+  if (!empty($order_wrapper->{$field_name}->commerce_customer_address)) {
+    $shipping_address = $order_wrapper->{$field_name}->commerce_customer_address->value();
+  }
+  else {
+    $shipping_address = addressfield_default_values();
+  }
+  
+  $destino = $shipping_address["administrative_area"];
+  $pais_destino = $shipping_address["country"];
+  $monto_total = 0;
+  $transporte_total = 0;
+  $array_comunas = get_array_comunas();
+
+  if($pais_destino != "CL") return false;
+
+  foreach($array_productos_by_seller = get_productos_by_seller($order) as $seller)
+  {
+      $weight_seller = 0;
+      $volume_seller = 0;
+      $transporte_seller = 0;
+      $monto_seller = 0;
+      
+/*
+      echo "<div style='display:none;'>";
+      echo "<pre>";
+      print_r($seller["productos"]);
+      echo "</pre>";
+      echo "</div>";
+*/
+
+      foreach ($seller["productos"] as $seller_product) 
+      {
+         $weight_producto = 0;
+         $tiene_transporte = 1;
+         $weight_seller += $seller_product["weight"];
+         $volume_seller += $seller_product["volume"];
+         $origen_seller = $seller_product["origen"];
+         $transporte_seller += $seller_product["transporte"];
+
+         // Si algún producto no tiene el transporte se cobrará de forma normal
+         if ($seller_product["transporte"] == '' || $seller_product["transporte"] == 0) $tiene_transporte = 0;
+
+
+         // calcular costo envio producto
+          $peso_volumetico_producto = $seller_product["volume"] / 6;
+          if($peso_volumetico_producto < $seller_product["weight"])
+          {
+            $peso_volumetico_producto = $seller_product["weight"];
+          }
+          
+          $monto_producto = 0;
+          if(($array_comunas[$destino]["zona"] != "intra") || ($tiene_transporte == 0))
+          {
+            $monto_producto = get_monto_paquete_correo($origen_seller, $destino, $peso_volumetico_producto);
+            if(($tiene_transporte == 1) && ($array_comunas[$destino]["zona"] != "intra"))
+            {
+              $monto_producto = $monto_producto - $seller_product["transporte"];
+            } 
+
+          }
+          
+          $monto_seller += $monto_producto;
+      }
+      
+      $monto_total += $monto_seller;
+      $transporte_total += $transporte_seller;
+  }
+
+  if($user->uid == 1 || $user->uid == 334) $monto_total = 0;
+  
+  // validar si en algún caso el valor fuera negativo
+  if ($monto_total < 0) $monto_total = 0;
+
+  return array(
+    'amount' => $monto_total,
+    'currency_code' => 'CLP',
+    'data' => array(),
+  );
+}
+
+function get_monto_paquete_correo($origen_seller, $destino, $peso)
+{
+      
+      if(!$origen_seller) return 0;
+
+      // Preparar parámetros Web service de correo
+      $requestParams = array(
+      'p_Tipo' => '1',
+      'p_cobertura' => '1',
+      'p_LISE_ID_LINEASERVICIO' => '20',
+      'p_Origen' => $origen_seller,
+      'p_Destino' => $destino,
+      'p_Peso' => $peso,
+      'p_tipodoc' => '1'
+      );
+
+      // Llamar al Web Service
+      try{
+        
+        /*$soapParams = array("connection_timeout" => 10);
+        ini_set('default_socket_timeout', 10);
+        $client = new SoapClient("http://courier.correos.cl/wstarificador/WsTarificador.asmx?wsdl",$soapParams);*/
+        
+        $client = new SoapClient("http://courier.correos.cl/wstarificador/WsTarificador.asmx?wsdl");
+        $response = $client->GetCotizacionPostalCep($requestParams);
+      
+        // echo "<pre>"; 
+        // print_r($response->Postal_Y_CEPResult->ListaCep->Cep);
+        // echo "</pre>";
+
+        if(array_key_exists('Valor', $response->Postal_Y_CEPResult->ListaCep->Cep))
+        {
+          return $response->Postal_Y_CEPResult->ListaCep->Cep->Valor;
+        }else
+        {
+          return $response->Postal_Y_CEPResult->ListaCep->Cep[0]->Valor;
+        }
+
+      }catch(Exception $e){
+        return false;
+      }
+
+      //return $response->Postal_Y_CEPResult->ListaCep->Cep[0]->Valor;
+      return false;
+}
+
+
+
+/**
+ * Shipping service callback: returns the example shipping service details form.
+ */
+function commerce_shipping_correos_service_details_form($pane_form, $pane_values, $checkout_pane, $order, $shipping_service) {
+  $form = array();
+
+  $pane_values['service_details'] += array(
+    'name' => '',
+    'express' => '',
+  );
+
+  // $form['name'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Name'),
+  //   '#description' => t('This is a demonstration field coded to fail validation for single character values.'),
+  //   '#default_value' => $pane_values['service_details']['name'],
+  //   '#required' => TRUE,
+  // );
+
+/*  $form['express'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Express delivery'),
+    '#description' => t('Express delivery (costs an additional $15)'),
+    '#default_value' => $pane_values['service_details']['express'],
+  );*/
+
+  return $form;
+}
+
+/**
+ * Shipping service callback: validates the example shipping service details.
+ */
+function commerce_shipping_correos_service_details_form_validate($details_form, $details_values, $shipping_service, $order, $form_parents) {
+  if (strlen($details_values['name']) < 2) {
+    form_set_error(implode('][', array_merge($form_parents, array('name'))), t('You must enter a name two or more characters long.'));
+
+    // Even though the form error is enough to stop the submission of the form,
+    // it's not enough to stop it from a Commerce standpoint because of the
+    // combined validation / submission going on per-pane in the checkout form.
+    return FALSE;
+  }
+}
+
+/**
+ * Shipping service callback: increases the shipping line item's unit price if
+ * express delivery was selected.
+ */
+function commerce_shipping_correos_service_details_form_submit($details_form, $details_values, $line_item) {
+  if ($details_values['express']) {
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+
+    // Build a price array for the express delivery fee.
+    $express_price = array(
+      'amount' => 1500,
+      'currency_code' => 'CLP',
+      'data' => array(),
+    );
+
+    // Add the express upcharge to the line item unit price.
+    $line_item_wrapper->commerce_unit_price->amount = $line_item_wrapper->commerce_unit_price->amount->value() + 1500;
+
+    // Add the express delivery fee component to the unit price.
+    $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
+      $line_item_wrapper->commerce_unit_price->value(),
+      'example_shipping_service_express',
+      $express_price,
+      TRUE,
+      FALSE
+    );
+  }
+}
+
+/**
+ * Implements hook_commerce_price_component_type_info().
+ */
+function commerce_shipping_correos_commerce_price_component_type_info() {
+  return array(
+    'example_shipping_service_express' => array(
+      'title' => t('Express delivery'),
+      'weight' => 20,
+    ),
+  );
+}

@@ -1,0 +1,388 @@
+<?php
+
+/**
+ * @file
+ * Define cálculo de shipping para DHL.
+ */
+
+
+/**
+ * Implements hook_commerce_shipping_method_info().
+ */
+function commerce_shipping_dhlchile_commerce_shipping_method_info() {
+  $shipping_methods = array();
+
+  $shipping_methods['dhlchile'] = array(
+    'title' => t('DHL'),
+    'description' => t('Calcula costo de Correos de Chile'),
+  );
+
+  return $shipping_methods;
+}
+
+/**
+ * Implements hook_commerce_shipping_service_info().
+ */
+function commerce_shipping_dhlchile_commerce_shipping_service_info() {
+  $shipping_services = array();
+
+  $shipping_services['dhlchile_shipping_service'] = array(
+    'title' => t('DHL shipping service'),
+    'description' => t('Un servicio que calcula el costo de shipping de un producto según tabla de precios DHL.'),
+    'display_title' => t('DHL'),
+    'shipping_method' => 'dhlchile',
+    'price_component' => 'shipping',
+    'callbacks' => array(
+      'rate' => 'commerce_shipping_dhlchile_service_rate',
+      'details_form' => 'commerce_shipping_dhlchile_service_details_form',
+      //'details_form_validate' => 'commerce_shipping_correos_service_details_form_validate',
+      //'details_form_submit' => 'commerce_shipping_correos_service_details_form_submit',
+    ),
+  );
+
+  return $shipping_services;
+}
+
+/**
+ * Shipping service callback: returns a base price array for a shipping service
+ * calculated for the given order.
+ */
+function commerce_shipping_dhlchile_service_rate($shipping_service, $order) {
+  global $user;
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  // Determine the shipping profile reference field name for the order.
+  $field_name = commerce_physical_order_shipping_field_name($order);
+  $shipping_profile = $order_wrapper->{$field_name}->value();
+
+  
+  // Prepare the shipping address for use in the request.
+  if (!empty($order_wrapper->{$field_name}->commerce_customer_address)) {
+    $shipping_address = $order_wrapper->{$field_name}->commerce_customer_address->value();
+  }
+  else {
+    $shipping_address = addressfield_default_values();
+  }
+
+  $destino = $shipping_address["administrative_area"];
+  $pais_destino = $shipping_address["country"];
+  $monto_total = 0;
+
+  //if($pais_destino == "CL") return false;
+  // echo "<pre>";
+  // print_r(get_productos_by_seller($order));
+  // echo "</pre>";
+
+  foreach($array_productos_by_seller = get_productos_by_seller($order) as $seller)
+  {
+      $weight_seller = 0;
+      $volume_seller = 0;
+      
+      foreach ($seller["productos"] as $seller_product) 
+      {
+         $weight_seller += $seller_product["weight"];
+         $volume_seller += $seller_product["volume"];
+         $origen_seller = $seller_product["origen"];
+      }
+
+      
+      $peso_volumetico = $volume_seller / 5;
+
+      if($peso_volumetico > $weight_seller)
+      {
+        $weight_seller = $peso_volumetico;
+      }
+
+      // Llamar al Web Service
+      if($pais_destino != "CL")
+      {
+        $monto_seller = get_monto_paquete_dhl_internacional($pais_destino, $weight_seller);
+      }else
+      {
+        $monto_seller = get_monto_paquete_dhl_nacional($destino,$origen_seller,$weight_seller);
+      }
+      
+      $monto_total += $monto_seller;
+  }
+  
+  if ($monto_total == 0) return false;
+
+  //if($user->uid == 1) $monto_total = 1;
+
+  return array(
+    'amount' => $monto_total,
+    'currency_code' => 'CLP',
+    'data' => array(),
+  );
+}
+
+function get_monto_paquete_dhl_nacional($destino, $origen, $peso)
+{
+  $zona_dhl = get_zona_dhl_nacional($destino, $origen);
+  ini_set('auto_detect_line_endings',TRUE);
+  //echo "zona:".$zona_dhl;
+  //echo "peso:".$peso;
+  //$peso = 21500;
+  $array_valores_zona = array();
+
+  $fila = 0;
+  if (($gestor = fopen("sites/default/files/dhl_nacional_nivel_tarifario.csv", "r")) !== FALSE) 
+  {
+    while (($datos = fgetcsv($gestor, 0, ";")) !== FALSE)  
+    {
+          $array_valores_zona[] = $datos[$zona_dhl-1];
+    }
+      
+      ini_set('auto_detect_line_endings',FALSE);
+      fclose($gestor);
+  }
+  
+  // echo "<pre>";
+  // print_r($array_valores_zona);
+  // echo "</pre>";
+
+  $indice = floor($peso / 500); // 500 tramo de precios DHL
+  $ultimo_indice = count($array_valores_zona) - 1;
+
+  if($indice >  $ultimo_indice)
+  {
+    $precio_kilo = $array_valores_zona[$ultimo_indice+1];
+    $precio_base = $array_valores_zona[$ultimo_indice];
+    $precio = $precio_base + ceil(($peso - 20000) /  1000) * $precio_kilo;
+  }else
+  {
+    $precio = $array_valores_zona[$indice];
+  }
+  //echo sizeof($array_valores_zona);
+  //echo $array_valores_zona[$indice];
+  //echo "precio:".$precio;
+  return $precio;
+
+}
+
+function get_zona_dhl_nacional($destino, $origen)
+{
+  
+  // Buscar Zona
+  $zona_destino = get_zona_dhl_nacional_comuna($destino);
+  $zona_origen = get_zona_dhl_nacional_comuna($origen);
+  ini_set('auto_detect_line_endings',TRUE);
+
+  //echo "Destino: ".$destino ." ". $zona_destino.", Origen: ".$origen." ".$zona_origen;
+
+  if (($gestor = fopen("sites/default/files/dhl_nacional_zonas.csv", "r")) !== FALSE) 
+  {
+    $fila = -1;
+    while (($datos = fgetcsv($gestor, 0, ";")) !== FALSE)  
+    {
+        //echo "fila:".$fila;
+        $numero = count($datos);
+        if($fila == $zona_origen)
+        {
+          for ($c=0; $c < $numero; $c++) 
+          {
+            //echo $zona_destino;
+            if($c == $zona_destino)
+            {
+              $nivel_tarifario = $datos[$zona_destino];
+              //print_r($datos);
+            }
+
+          }
+        }
+
+        $fila++;
+
+    }
+    ini_set('auto_detect_line_endings',FALSE);
+    fclose($gestor);
+  }
+  return $nivel_tarifario; 
+}
+
+function get_zona_dhl_nacional_comuna($comuna)
+{
+  ini_set('auto_detect_line_endings',TRUE);
+  // Buscar Zona
+  if (($gestor = fopen("sites/default/files/dhl_nacional_zonas.csv", "r")) !== FALSE) 
+  {
+    $fila = 0;
+    while (($datos = fgetcsv($gestor, 0, ";")) !== FALSE)  
+    {
+        $numero = count($datos);
+        $fila++;
+        for ($c=0; $c < $numero; $c++) 
+        {
+          $array_comunas = explode(",", $datos[$c]);
+          if (in_array($comuna, $array_comunas))
+          {
+            $zona_comuna = $c;
+            break;
+          }
+        }
+    }
+    ini_set('auto_detect_line_endings',FALSE);
+    fclose($gestor);
+  }
+  return $zona_comuna; 
+}
+
+function get_monto_paquete_dhl_internacional($pais_destino, $peso)
+{
+  ini_set('auto_detect_line_endings',TRUE);
+  $zona_dhl = get_zona_dhl($pais_destino);
+  //echo "zona:".$zona_dhl;
+  //$peso = 21500;
+  $array_valores_zona = array();
+
+  $fila = 1;
+  if (($gestor = fopen("sites/default/files/dhl_internacional_tarifas.csv", "r")) !== FALSE) 
+  {
+    while (($datos = fgetcsv($gestor, 0, ";")) !== FALSE)  
+    {
+          $array_valores_zona[] = $datos[$zona_dhl];
+    }
+      
+      ini_set('auto_detect_line_endings',FALSE);
+      fclose($gestor);
+  }
+  
+  // echo "<pre>";
+  // print_r($array_valores_zona);
+  // echo "</pre>";
+
+  $indice = ceil($peso / 500); // 500 tramo de precios DHL
+  $ultimo_indice = count($array_valores_zona) - 3;
+
+  if($indice >  $ultimo_indice)
+  {
+    $precio_kilo = $array_valores_zona[$ultimo_indice+1];
+    if($peso >= 70000)
+    {
+      $precio_kilo = $array_valores_zona[$ultimo_indice+2];
+    }
+    $precio_base = $array_valores_zona[$ultimo_indice];
+    $precio = $precio_base + ceil(($peso - 20000) /  1000) * $precio_kilo;
+  }else
+  {
+    $precio = $array_valores_zona[$indice];
+  }
+  //echo sizeof($array_valores_zona);
+  //echo $array_valores_zona[$indice];
+  //echo $precio;
+  return $precio;
+
+}
+
+function get_zona_dhl($pais_destino)
+{
+  // Buscar Zona
+  $fila = 1;
+  if (($gestor = fopen("sites/default/files/dhl_internacional_tarifas.csv", "r")) !== FALSE) 
+  {
+      $zona_pais = false;
+      while (($datos = fgetcsv($gestor, 1000, ";")) !== FALSE && $zona_pais == FALSE)  
+      {
+          $numero = count($datos);
+          //echo "<p> $numero de campos en la línea $fila: <br /></p>\n";
+          $fila++;
+          for ($c=0; $c < $numero; $c++) 
+          {
+              $array_paises = explode(",", $datos[$c]);
+              if (in_array($pais_destino, $array_paises))
+              {
+                  $zona_pais = $c;
+                  break;
+              }
+          }
+      }
+
+      fclose($gestor);
+
+      return $zona_pais;
+  }
+}
+
+/**
+ * Shipping service callback: returns the example shipping service details form.
+ */
+function commerce_shipping_dhlchile_service_details_form($pane_form, $pane_values, $checkout_pane, $order, $shipping_service) {
+  $form = array();
+
+  $pane_values['service_details'] += array(
+    'name' => '',
+    'express' => '',
+  );
+
+  // $form['name'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Name'),
+  //   '#description' => t('This is a demonstration field coded to fail validation for single character values.'),
+  //   '#default_value' => $pane_values['service_details']['name'],
+  //   '#required' => TRUE,
+  // );
+
+/*  $form['express'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Express delivery'),
+    '#description' => t('Express delivery (costs an additional $15)'),
+    '#default_value' => $pane_values['service_details']['express'],
+  );*/
+
+  return $form;
+}
+
+/**
+ * Shipping service callback: validates the example shipping service details.
+ */
+function commerce_shipping_dhlchile_service_details_form_validate($details_form, $details_values, $shipping_service, $order, $form_parents) {
+  if (strlen($details_values['name']) < 2) {
+    form_set_error(implode('][', array_merge($form_parents, array('name'))), t('You must enter a name two or more characters long.'));
+
+    // Even though the form error is enough to stop the submission of the form,
+    // it's not enough to stop it from a Commerce standpoint because of the
+    // combined validation / submission going on per-pane in the checkout form.
+    return FALSE;
+  }
+}
+
+/**
+ * Shipping service callback: increases the shipping line item's unit price if
+ * express delivery was selected.
+ */
+function commerce_shipping_dhlchile_service_details_form_submit($details_form, $details_values, $line_item) {
+  if ($details_values['express']) {
+    $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+
+    // Build a price array for the express delivery fee.
+    $express_price = array(
+      'amount' => 1500,
+      'currency_code' => 'CLP',
+      'data' => array(),
+    );
+
+    // Add the express upcharge to the line item unit price.
+    $line_item_wrapper->commerce_unit_price->amount = $line_item_wrapper->commerce_unit_price->amount->value() + 1500;
+
+    // Add the express delivery fee component to the unit price.
+    $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
+      $line_item_wrapper->commerce_unit_price->value(),
+      'example_shipping_service_express',
+      $express_price,
+      TRUE,
+      FALSE
+    );
+  }
+}
+
+/**
+ * Implements hook_commerce_price_component_type_info().
+ */
+function commerce_shipping_dhlchile_commerce_price_component_type_info() {
+  return array(
+    'example_shipping_service_express' => array(
+      'title' => t('Express delivery'),
+      'weight' => 20,
+    ),
+  );
+}

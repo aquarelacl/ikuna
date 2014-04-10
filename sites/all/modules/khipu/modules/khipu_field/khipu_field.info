@@ -1,0 +1,13 @@
+name = Khipu Field
+description = Implements the payment button like a field to any entities with a mini system for orders.
+core = 7.x
+package = Khipu
+dependencies[] = khipu
+dependencies[] = field
+
+; Information added by drupal.org packaging script on 2013-05-16
+version = "7.x-1.0-beta2"
+core = "7.x"
+project = "khipu"
+datestamp = "1368731715"
+

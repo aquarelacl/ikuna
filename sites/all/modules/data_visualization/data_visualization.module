@@ -1,0 +1,911 @@
+<?php
+
+/**
+ * @file
+ * The main module file, contains definitions for the data_visualization entity
+ * and helper functions.
+ * It also contains all of the forms for the module.
+ */
+
+/**
+ * Implements hook_init().
+ *
+ */
+function data_visualization_init() {
+  // Allowed libraries TODO: make this a config variable.
+  $allowed_libraries = array('jquery.jqplot', 'jquery.jit', 'jquery.highcharts');
+  $libraries = libraries_get_libraries();
+  $no_library = TRUE;
+  foreach ($libraries as $library_name => $library_path) {
+    if (in_array($library_name, array_values($allowed_libraries))) {
+      $no_library = FALSE;
+    }
+  }
+  // If there is no rendering library installed notify the user.
+  if ($no_library) {
+    drupal_set_message(t('The Data Visualization API has detected you do not have a visualization library installed,
+      please install <a href="http://www.highcharts.com/download">highcharts</a>, <a href="http://thejit.org/">JIT</a> or
+      <a href="https://bitbucket.org/cleonello/jqplot/downloads/">jqplot</a>.
+      See the README file that came with the module for more information.'), 'warning');
+  }
+
+  // Set path to dataviz api that can be passed to javascript adapters call.
+  $data_viz_module_path = variable_get('data_visualization_api_module_path', NULL);
+  if (empty($data_viz_module_path)) {
+    $data_viz_module_path = drupal_get_path('module', 'data_visualization');
+    variable_set('data_visualization_api_module_path', $data_viz_module_path);
+  }
+  drupal_add_js(array('data_visualization' => array('data_visualization_module_path' => $data_viz_module_path)), 'setting');
+}
+
+/**
+ * Implements hook_menu().
+ *
+ */
+function data_visualization_menu() {
+  return array(
+    'admin/content/data-visualization' => array(
+      'title' => 'Data Visualizations',
+      'description' => 'Manage Data Visualization Structure',
+      'page callback' => 'data_visualization_info',
+      'access arguments' => array('administer data visualizations'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 3,
+    ),
+    'admin/content/data-visualization/manage' => array(
+      'title' => 'Manage',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -1,
+    ),
+    'admin/content/data-visualization/import' => array(
+      'title' => 'Data Visualization CSV Import',
+      'description' => 'Import Data Visualization data from external files',
+      'page callback' => 'data_visualization_import',
+      'access arguments' => array('import data visualization entities'),
+    ),
+    'admin/config/data-visualization' => array(
+      'title' => 'Data Visualization Settings',
+      'description' => 'Settings for the Data Visualization API',
+      'page callback' => 'data_visualization_settings',
+      'access arguments' => array('administer data visualizations'),
+      'type' => MENU_LOCAL_TASK,
+    ),
+    'data-visualization/%data_visualization' => array(
+      'title callback' => 'data_visualization_title',
+      'title arguments' => array(1),
+      'page callback' => 'data_visualization_page_view',
+      'page arguments' => array(1),
+      'access arguments' => array('view data visualization entities'),
+    ),
+    'data-visualization/%data_visualization/view' => array(
+      'title' => 'View',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -1,
+    ),
+    'data-visualization/add' => array(
+      'title' => 'Add Data Visualization',
+      'page callback' => 'data_visualization_add',
+      'access arguments' => array('create data visualization entities'),
+    ),
+    'data-visualization/%data_visualization/edit' => array(
+      'title' => 'Edit',
+      'page callback' => 'data_visualization_edit',
+      'page arguments' => array(1),
+      'access arguments' => array('edit data visualization entities'),
+      'type' => MENU_LOCAL_TASK,
+    ),
+    'data-visualization/%data_visualization/delete' => array(
+      'title' => 'Delete Data Visualization',
+      'page callback' => 'data_visualization_delete_page_callback',
+      'page arguments' => array(1),
+      'access arguments' => array('delete data visualization entities'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function data_visualization_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  // Add action link to 'node/add' on 'admin/content' page.
+  if ($root_path == 'admin/content/data-visualization') {
+    $item = menu_get_item('data-visualization/add');
+    if ($item['access']) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => $item,
+      );
+    }
+    $import_item = menu_get_item('admin/content/data-visualization/import');
+    if ($import_item['access']) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => $import_item,
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function data_visualization_admin_paths() {
+  if (variable_get('node_admin_theme')) {
+    $paths = array(
+      'data-visualization/add' => TRUE,
+      'data-visualization/*/edit' => TRUE,
+      'data-visualization/*/delete' => TRUE,
+    );
+    return $paths;
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function data_visualization_block_info() {
+  $blocks = array();
+  $dvids_results = db_select('data_visualization', 'dv')
+                    ->fields('dv', array('dvid'))->execute()->fetchAll();
+  $dvids = array();
+  foreach ($dvids_results as $dvid_result) {
+    array_push($dvids, $dvid_result->dvid);
+  }
+
+  $data_visualizations = data_visualization_load_multiple($dvids);
+
+  foreach ($data_visualizations as $data_visualization) {
+    $blocks['data_viz_api-' . $data_visualization->dvid] = array(
+      'info' => t('Data Visualization: @title', array('@title' => $data_visualization->title)),
+      'cache' => DRUPAL_NO_CACHE,
+    );
+  }
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function data_visualization_block_view($delta = '') {
+  $block = array();
+  $dvid = str_replace('data_viz_api-', '', $delta);
+  $data_visualization = data_visualization_load($dvid);
+  $block['subject'] = $data_visualization->title;
+
+  ctools_include('libraries', 'data_visualization');
+  data_visualization_libraries_load($data_visualization->library);
+
+  $html = '';
+  if ($data_visualization->fid) {
+    $data_file = file_load($data_visualization->fid);
+
+    $html = '<div id="data-visualization-container-' . $dvid . '"></div>';
+    drupal_add_js(drupal_get_path('module', 'data_visualization') . '/js/data_viz_api_adapter.js', 'file');
+    drupal_add_js('jQuery(document).ready(function(){ DATAVIZ.render(DATAVIZ.adapters["' . $data_visualization->library . '"], "' .
+    file_create_url($data_file->uri) . '", "' . $data_visualization->viz_type . '", "data-visualization-container-' . $data_visualization->dvid . '"); });', 'inline');
+  }
+  else {
+    $html = '<div><p>' . t('This data visualization has no associated data file.') . '</p></div>';
+  }
+
+  $block['content'] = $html;
+
+  return $block;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function data_visualization_permission() {
+  return array(
+    'view data visualization entities' => array(
+      'title' => t('View Data Visualizations'),
+      'description' => t('Allow users to view data visualization entities'),
+    ),
+    'administer data visualizations' => array(
+      'title' => t('Administer Data Visualizations'),
+      'description' => t('Allow users to administer data visualizations'),
+    ),
+    'create data visualization entities' => array(
+      'title' => t('Create Data Visualization Entities'),
+      'description' => t('Allow users to add data visualization entities'),
+    ),
+    'edit data visualization entities' => array(
+      'title' => t('Edit Data Visualization Entities'),
+      'description' => t('Allow users to edit data visualization entities'),
+    ),
+    'delete data visualization entities' => array(
+      'title' => t('Delete Data Visualization Entities'),
+      'description' => t('Allow users to delete data visualizations'),
+    ),
+    'import data visualization entities' => array(
+      'title' => t('Delete Data Visualization Entities'),
+      'description' => t('Allow users to delete data visualizations'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_entity_info().
+ *
+ */
+function data_visualization_entity_info() {
+  $data_visualization_info['data_visualization'] = array(
+    'label' => t('Data Visualization'),
+    'controller class' => 'DataVisualizationController',
+    'base table' => 'data_visualization',
+    'uri callback' => 'data_visualization_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'dvid',
+    ),
+    'static cache' => TRUE,
+    'bundles' => array(
+      'postit' => array(
+        'label' => t('Data Visualizations'),
+        'admin' => array(
+          'path' => 'admin/content/datavisualization/manage',
+          'access arguments' => array('administer data visualizations'),
+        ),
+      ),
+    ),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Data Visualization Full Page Detail'),
+        'custom settings' =>  FALSE,
+      ),
+    ),
+  );
+
+  return $data_visualization_info;
+}
+
+/**
+ * data_visualization_uri
+ *
+ */
+function data_visualization_uri($data_visualization) {
+  return array(
+    'path' => 'data-visualization/' . $data_visualization->dvid,
+  );
+}
+
+/**
+ * data_visualization_load
+ * load a single data_visualizaton entity
+ */
+function data_visualization_load($dvid = NULL, $reset = FALSE) {
+  $dvids = (isset($dvid) ? array($dvid) : array());
+  $data_visualization = data_visualization_load_multiple($dvids, $reset);
+  return $data_visualization ? reset($data_visualization) : FALSE;
+}
+
+/**
+ * data_visualization_load_multiple
+ * load multiple data_visualization entities
+ */
+function data_visualization_load_multiple($dvids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('data_visualization', $dvids, $conditions, $reset);
+}
+
+/**
+ * data_visualization_add
+ *
+ */
+function data_visualization_add() {
+  $data_visualization = (object) array(
+    'dvid' => '',
+    'type' => 'data_visualization',
+  );
+
+  return drupal_get_form('data_visualization_add_form', $data_visualization);
+}
+
+/**
+ * data_visualization_edit
+ *
+ */
+function data_visualization_edit($data_visualization) {
+  ctools_include('forms', 'data_visualization');
+  return drupal_get_form('data_visualization_edit_form', $data_visualization);
+}
+
+/**
+ * data_visualization_delete
+ *
+ */
+function data_visualization_delete_page_callback($data_visualization) {
+  return drupal_get_form('data_visualization_delete_form', $data_visualization);
+}
+
+/**
+ * data_visualization_add_form
+ *
+ */
+function data_visualization_add_form($form, &$form_state, $data_visualization) {
+
+  // Allowed libraries are an array.
+  $allowed_libraries = array('jquery.jqplot', 'jquery.jit', 'jquery.highcharts');
+
+  // This part is for files.
+  $form = array('#attributes' => array('enctype' => "multipart/form-data"));
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Data Visualization Title',
+    '#required' => TRUE,
+  );
+
+  $form['description'] = array(
+    '#type' => 'textarea',
+    '#title' => 'Data Visualization Description',
+    '#required' => FALSE,
+  );
+
+  $form['data_file'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('Data File'),
+    '#size' => 48,
+    '#description' => t('Upload a json file written in !Vizstruct-link json notation.', array('!Vistruct-link', l('Vizstruct', drupal_get_path('module', 'data_visualization_api') . '/spec.md', array('attributes' => array('target' => '_blank'))))),
+    '#upload_location' => 'public://data-visualization-files',
+  );
+
+  $form['data_file']['#upload_validators']['file_validate_extensions'][0] = 'js json';
+
+  $form['viz_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Visualization Type'),
+    '#default_value' => 'line',
+    '#options' => array('line' => t('Line'), 'bar' => t('Bar'), 'pie' => t('Pie')),
+
+  );
+
+  $libraries = libraries_get_libraries();
+
+  $libraries_options = array();
+  foreach ($libraries as $library_name => $library_path) {
+    if (in_array($library_name, array_values($allowed_libraries))) {
+      $libraries_options[$library_name] = $library_name;
+    }
+  }
+
+  $form['library'] = array(
+    '#type' => 'radios',
+    '#title' => t('Visualization Library'),
+    '#default_value' => 0,
+    '#options' => $libraries_options,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  field_attach_form('data_visualization', $data_visualization, $form, $form_state);
+  return $form;
+}
+
+/**
+ * data_visualization_add_form_validate
+ *
+ */
+function data_visualization_add_form_validate($form, &$form_state) {
+  // TODO: Write better validation function.
+  $file = file_load($form_state['values']['data_file']);
+  $data_file_contents = file_get_contents($file->uri);
+
+  $data_object_from_file = json_decode($data_file_contents);
+
+  // Check for basic vizstruct structure.
+  if (empty($data_object_from_file->series)) {
+    form_set_error('data_file', t('The data file must be in proper Vizstruct notation.'));
+  }
+}
+
+/**
+ * data_visualization_add_form_submit
+ *
+ */
+function data_visualization_add_form_submit($form, &$form_state) {
+  $data_visualization_submission = (object) $form_state['values'];
+  field_attach_submit('data_visualization', $data_visualization_submission, $form, $form_state);
+  $file = file_load($data_visualization_submission->data_file);
+  $file->status = FILE_STATUS_PERMANENT;
+  file_save($file);
+
+  $data_visualization_submission->fid = $file->fid;
+  $data_visualization = data_visualization_save($data_visualization_submission);
+  file_usage_add($file, 'data_visualization', 'data_visualization', $data_visualization->dvid);
+  $form_state['redirect'] = 'data-visualization/' . $data_visualization->dvid;
+}
+
+/**
+ * data_visualization_delete_form
+ *
+ */
+function data_visualization_delete_form($form, &$form_state, $data_visualization) {
+  $form['dvid'] = array(
+    '#type' => 'hidden',
+    '#value' => $data_visualization->dvid,
+  );
+
+  return confirm_form($form, t('Are you sure you want to delete %title?', array('%title' => $data_visualization->title)),
+    'data-visualization/' . $data_visualization->dvid);
+}
+
+/**
+ * data_visualization_delete_form_validate
+ *
+ */
+function data_visualization_delete_form_validate($form, &$form_state) {
+
+}
+
+/**
+ * data_visualization_delete_form_submit
+ *
+ */
+function data_visualization_delete_form_submit($form, &$form_state) {
+  $data_visualization = data_visualization_load($form_state['values']['dvid']);
+  $num_deleted = data_visualization_delete($data_visualization);
+  if (!empty($num_deleted)) {
+    drupal_set_message(t("%title has been deleted along with it's associated data file."), array('%title' => check_plain($data_visualization_title)));
+    drupal_goto('admin/content/data-visualization');
+  }
+}
+
+/**
+ * data_visualization_save
+ *
+ */
+function data_visualization_save(&$data_visualization) {
+  return entity_get_controller('data_visualization')->save($data_visualization);
+}
+
+/**
+ * data_visualization_edit
+ *
+ */
+function data_visualization_delete(&$data_visualization) {
+  return entity_get_controller('data_visualization')->delete($data_visualization);
+}
+
+/**
+ * data_visualization_info
+ * Admin page for Data Visualizations
+ */
+function data_visualization_info() {
+  $content = t('Data Visualization Administration Page');
+  // Temporarily fetching all for now.
+  $visualizations = db_select('data_visualization', 'dv')
+                      ->fields('dv')->execute()->fetchAll();
+
+  $build = array(
+    '#theme' => 'table',
+    '#header' => array(t('Visualization'), t('Visualization Type'), t('Operations')),
+    '#empty' => t('There are no data visualizations'),
+    '#rows' => array(),
+  );
+
+  if ($visualizations) {
+    foreach ($visualizations as $visualization) {
+      $build['#rows'][] = array(
+        l($visualization->title, 'data-visualization/' . $visualization->dvid),
+        $visualization->viz_type,
+        l(t('Edit'), 'data-visualization/' . $visualization->dvid . '/edit') . ' ' . l(t('Delete'), 'data-visualization/' . $visualization->dvid . '/delete'),
+      );
+    }
+  }
+
+  return $build;
+}
+
+/**
+ * data_visualization_title
+ *
+ */
+function data_visualization_title($data_visualization) {
+  return $data_visualization->title;
+}
+
+/**
+ * data_visualization_page_view
+ *
+ */
+function data_visualization_page_view($data_visualization, $view_mode = 'full') {
+  $data_visualization->content = array();
+
+  ctools_include('libraries', 'data_visualization');
+  data_visualization_libraries_load($data_visualization->library);
+
+  drupal_add_js(drupal_get_path('module', 'data_visualization') . '/js/data_viz_api_adapter.js', 'file');
+
+  $content = '';
+  if (!empty($data_visualization->description)) {
+    $content .= '<p class="data-visualization-description">' . $data_visualization->description . '</p>';
+  }
+
+  if ($data_visualization->fid) {
+    $data_file = file_load($data_visualization->fid);
+    $data_file_contents = file_get_contents($data_file->uri);
+
+    $content .= '<div id="data-visualization-container-' . $data_visualization->dvid . '" style="width:500px;height:300px;"></div>';
+    drupal_add_js('jQuery(document).ready(function(){ DATAVIZ.render(DATAVIZ.adapters["' . $data_visualization->library . '"], "' .
+    file_create_url($data_file->uri) . '", "' . $data_visualization->viz_type . '", "data-visualization-container-' . $data_visualization->dvid . '"); });', 'inline');
+  }
+  field_attach_prepare_view('data_visualization', array($data_visualization->dvid => $data_visualization), $view_mode);
+  entity_prepare_view('data_visualization', array($data_visualization->dvid => $data_visualization));
+
+  $content .= '<h3 style="margin-top:15px;">Contents of data file</h3>';
+  $content .= '<textarea style="width:600px;height:300px;margin-top:5px;color:black;" disabled="true">';
+  $content .= $data_file_contents;
+  $content .= '</textarea>';
+
+  return $content;
+}
+
+/**
+ * data_visualization_settings
+ *
+ */
+function data_visualization_settings() {
+  return drupal_get_form('data_visualization_settings_form');
+}
+
+/**
+ * data_visualization_settings_form
+ *
+ */
+function data_visualization_settings_form() {
+  $form = array();
+
+  $form['general'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('General Options'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  $default_palette = unserialize(variable_get('data_visualization_default_color_palette'));
+
+  $formatted_values = '';
+  foreach ($default_palette as $color) {
+    $formatted_values .= $color . "\n";
+  }
+
+  $form['general']['default_color_palette'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Default Color Palette'),
+    '#description' => t('One hex value per line'),
+    '#default_value' => $formatted_values,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save Settings'),
+  );
+
+  return $form;
+}
+
+/**
+ * data_visualization_settings_form_validate
+ *
+ */
+function data_visualization_settins_form_validate($form, &$form_state) {
+  // TODO: Write settings form validation function.
+}
+
+/**
+ * data_visualization_settings_form_submit
+ *
+ */
+function data_visualization_settings_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+
+  $values_array = explode("\n", $values['default_color_palette']);
+  variable_set('data_visualization_default_color_palette', serialize($values_array));
+  drupal_set_message(t('Settings saved.'));
+}
+
+/**
+ * data_visualization_import
+ *
+ */
+function data_visualization_import() {
+  return drupal_get_form('data_visualization_import_form');
+}
+
+/**
+ * data_visualization_import_form
+ *
+ */
+function data_visualization_import_form() {
+  $form = array();
+  $form = array('#attributes' => array('enctype' => "multipart/form-data"));
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Data Visualization Title'),
+    '#required' => TRUE,
+  );
+
+  $form['description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Data Visualization Description'),
+    '#required' => FALSE,
+  );
+
+  $form['viz_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Visualization Type'),
+    '#default_value' => 'line',
+    '#options' => array('line' => t('Line'), 'bar' => t('Bar'), 'pie' => t('Pie')),
+  );
+
+  $libraries = libraries_get_libraries();
+  $allowed_libraries = array('jquery.jqplot', 'jquery.jit', 'jquery.highcharts');
+
+  $libraries_options = array();
+  foreach ($libraries as $library_name => $library_path) {
+    if (in_array($library_name, array_values($allowed_libraries))) {
+      $libraries_options[$library_name] = $library_name;
+    }
+  }
+
+  $form['library'] = array(
+    '#type' => 'radios',
+    '#title' => t('Visualization Library'),
+    '#default_value' => 0,
+    '#options' => $libraries_options,
+  );
+
+  $form['import_type'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Import Methods'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['import_type']['file'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Import CSV data from a file'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['import_type']['file']['uploaded_file'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('File to upload'),
+    '#description' => t('Only *.csv files'),
+  );
+
+  $form['import_type']['file']['uploaded_file']['#upload_validators']['file_validate_extensions'][0] = 'csv';
+
+  $form['import_type']['paste'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Paste CSV data directly into text area'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['import_type']['paste']['pasted_code'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Paste raw CSV data in here'),
+    '#description' => t('One series per line.  Each series must start with a string indicating its name. ie SeriesName, 1, 2, 3, 4.  Please delimit your values to commas ie SeriesName, 1, 2, 3, 4.  If you have x,y coordinates, contain each point with "[]", delimit them with "|" ie SeriesName,[1|2],[3|4],[5|6].  Strings can be intermixed with data ie SeriesName, [a|2], [b|3], [c|4]'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Import'),
+  );
+
+  return $form;
+}
+
+/**
+ * data_visualization_import_form_validate
+ *
+ */
+function data_visualization_import_form_validate($form, &$form_state) {
+  if ($form_state['values']['uploaded_file']) {
+    $file = file_load($form_state['values']['uploaded_file']);
+    $file_path = file_directory_temp() . '/' . $file->filename;
+    $row = 1;
+    if (($handle = fopen($file_path, "r")) !== FALSE) {
+      while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
+        if (empty($data)) {
+          form_set_error('uploaded_file', t('The file is not able to be parsed as a CSV file, please check the formatting of your file and try again.'));
+        }
+      }
+      fclose($handle);
+    }
+  }
+}
+
+/**
+ * data_visualization_import_form_submit
+ *
+ */
+function data_visualization_import_form_submit($form, &$form_state) {
+  $values = $form_state['values'];
+
+  $vizstruct_object = new stdClass();
+  $vizstruct_object->series = array();
+  $vizstruct_object->options = new stdClass();
+  $vizstruct_object->options->legend->show = TRUE;
+  $vizstruct_object->options->legend->location = 'e';
+  $vizstruct_object->options->tooltip = new stdClass();
+  $vizstruct_object->options->tooltip->enabled = TRUE;
+  $vizstruct_object->options->plotOptions->backgroundColor = '#FFF';
+
+  $vizstruct_object->options->title->text = $values['title'];
+  // $vizstruct_object->options->title->color = '#000';
+  if (!empty($values['description'])) {
+    $vizstruct_object->options->description->text = $values['description'];
+    // $vizstruct_object->options->description->color = '#000';
+  }
+
+  // Set default color palette.
+  $default_palette = unserialize(variable_get('data_visualization_default_color_palette'));
+  $vizstruct_object->options->colors = $default_palette;
+
+  if (!empty($form_state['values']['uploaded_file'])) {
+    // Turn the uploaded file into a vizstruct data object and save.
+    $file = file_load($form_state['values']['uploaded_file']);
+    $file_path = file_directory_temp() . '/' . $file->filename;
+    $series_index = 0;
+    if (($handle = fopen($file_path, "r")) !== FALSE) {
+      while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
+        $vizstruct_object->series[$series_index] = new stdClass();
+        $vizstruct_object->series[$series_index]->seriesName = $data[0];
+        $vizstruct_object->series[$series_index]->data = array();
+
+        // Set default colors.
+        $vizstruct_object->options->seriesOptions[$series_index] = new stdClass();
+        $vizstruct_object->options->seriesOptions[$series_index]->seriesName = $data[0];
+        $vizstruct_object->options->seriesOptions[$series_index]->seriesOptions = new stdClass();
+        $vizstruct_object->options->seriesOptions[$series_index]->seriesOptions->color = $default_palette[$series_index % count($default_palette)];
+
+        foreach ($data as $data_index => $data_value) {
+          if ($data_index != 0) {
+            $data_value_without_braces = str_replace('[', '', $data_value);
+            $data_value_without_braces = str_replace(']', '', $data_value_without_braces);
+            $data_value_array = explode('|', $data_value_without_braces);
+
+            // Quickly clean the array and turn numeric strings into int.
+            foreach ($data_value_array as $value_index => $value) {
+              if (is_numeric($value)) {
+                $data_value_array[$value_index] = (int) $value;
+              }
+            }
+
+            if (!empty($data_value_array[1])) {
+              $vizstruct_object->series[$series_index]->data[] = $data_value_array;
+            }
+            else {
+              $vizstruct_object->series[$series_index]->data[] = $data_value_array[0];
+            }
+          }
+        }
+        $series_index++;
+      }
+      fclose($handle);
+    }
+  }
+  else {
+    if (!empty($form_state['values']['pasted_code'])) {
+      // Do stuff for pasted code.
+      $array_from_csv = data_visualization_str_getcsv($form_state['values']['pasted_code']);
+      foreach ($array_from_csv as $series_index => $series) {
+        $vizstruct_object->series[$series_index] = new stdClass();
+        $vizstruct_object->series[$series_index]->seriesName = $series[0];
+        $vizstruct_object->series[$series_index]->data = array();
+
+        // Set default colors.
+        $vizstruct_object->options->seriesOptions[$series_index] = new stdClass();
+        $vizstruct_object->options->seriesOptions[$series_index]->seriesName = $series[0];
+        $vizstruct_object->options->seriesOptions[$series_index]->seriesOptions = new stdClass();
+        $vizstruct_object->options->seriesOptions[$series_index]->seriesOptions->color = $default_palette[$series_index % count($default_palette)];
+
+        foreach ($series as $data_index => $data_value) {
+          if ($data_index != 0) {
+            $data_value_without_braces = str_replace('[', '', $data_value);
+            $data_value_without_braces = str_replace(']', '', $data_value_without_braces);
+            $data_value_array = explode('|', $data_value_without_braces);
+
+            // Quickly clean the array and turn numeric strings into int.
+            foreach ($data_value_array as $value_index => $value) {
+              if (is_numeric($value)) {
+                $data_value_array[$value_index] = (int) $value;
+              }
+            }
+
+            if (!empty($data_value_array[1])) {
+              $vizstruct_object->series[$series_index]->data[] = $data_value_array;
+            }
+            else {
+              $vizstruct_object->series[$series_index]->data[] = $data_value_array[0];
+            }
+          }
+        }
+      }
+    }
+  }
+
+  $file_name = drupal_html_id($values['title']);
+
+  $new_managed_data_file = file_save_data(json_encode($vizstruct_object));
+  $new_managed_data_file->filename =  $file_name . '.json';
+  $new_managed_data_file->filemime = 'application/json';
+  $new_maanged_data_file->status = FILE_STATUS_PERMANENT;
+
+  $saved_file = file_save($new_managed_data_file);
+
+  file_move($saved_file, 'public://data-visualization-files/' . $new_managed_data_file->filename);
+
+  $data_visualization = (object) array(
+    'dvid' => '',
+    'type' => 'data_visualization',
+    'title' => $values['title'],
+    'description' => $values['description'],
+    'fid' => $saved_file->fid,
+    'viz_type' => $values['viz_type'],
+    'library' => $values['library'],
+  );
+
+  $new_data_visualization = data_visualization_save($data_visualization);
+  file_usage_add($saved_file, 'data_visualization', 'data_visualization', $new_data_visualization->dvid);
+
+  drupal_set_message(t('Data visualization successfully imported. Click !here-edit to edit further.',
+   array('!here-edit' => l(t('here'), 'data-visualization/' . $new_data_visualization->dvid . '/edit'))));
+  drupal_goto('data-visualization/' . $new_data_visualization->dvid);
+}
+
+/**
+ * data_visualization_field_extra_fields
+ *
+ */
+function data_visualization_field_extra_fields() {
+  $return = array();
+  $return['data_visualization']['data_visualization'] = array(
+    'form' => array(
+      'test' => array(
+        'label' => t('Test'),
+        'description' => t('Test Field'),
+      ),
+    ),
+  );
+
+  return $return;
+}
+
+/**
+ * data_visualization_theme
+ *
+ */
+function data_visualization_theme() {
+  $path = 'includes/theme.inc';
+  return array(
+    'data_visualization_adapter' => array(
+      'variables' => array(),
+      'file' => $path,
+    ),
+  );
+}
+
+/**
+ * data_visualization_str_getcsv
+ *
+ */
+function data_visualization_str_getcsv($input, $delimiter = ',', $enclosure = '"' , $escape = NULL, $eol = NULL) {
+  $temp = fopen("php://memory", "rw");
+  fwrite($temp, $input);
+  fseek($temp, 0);
+  $r = array();
+  while (($data = fgetcsv($temp, 9999, $delimiter, $enclosure)) !== FALSE) {
+    $r[] = $data;
+  }
+  fclose($temp);
+  return $r;
+}
